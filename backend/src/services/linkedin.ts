@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User } from '../models/User.js';
+import { User, IUser } from '../models/User.js';
 
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
@@ -215,7 +215,7 @@ export class LinkedInService {
     }
   }
 
-  static async updateUserLinkedInData(user: User, linkedInData: any): Promise<void> {
+  static async updateUserLinkedInData(user: IUser, linkedInData: any): Promise<void> {
     try {
       // Update user's LinkedIn data
       user.linkedInId = linkedInData.id;
