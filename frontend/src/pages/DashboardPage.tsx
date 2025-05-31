@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, Upload, Clipboard, Plus, Github, Linkedin, CheckCircle, File, Award, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, Upload, Clipboard, Plus, Github, Linkedin, CheckCircle, File, Award, AlertCircle, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import LinkedInAuthModal from '../components/LinkedInAuthModal';
+import ResumeParseForm from '../components/ResumeParseForm';
 import { api } from '../services/api';
+import { parseResumeWithGemini, ParsedResumeData } from '../services/gemini';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -12,6 +14,15 @@ const DashboardPage = () => {
   const [linkedInData, setLinkedInData] = useState<any>(null);
   const [linkedInError, setLinkedInError] = useState('');
   const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadSuccessMessage, setUploadSuccessMessage] = useState('');
+  const [showParseForm, setShowParseForm] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [parsedData, setParsedData] = useState<ParsedResumeData | null>(null);
+  const [parseError, setParseError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const resumes = [
     {
       id: 1,
@@ -71,6 +82,95 @@ const DashboardPage = () => {
     } finally {
       setLoadingLinkedIn(false);
     }
+  };
+
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Please upload a PDF or Word document');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB');
+      return;
+    }
+
+    setUploadingResume(true);
+    setUploadError('');
+    setUploadSuccess(false);
+    setParseError('');
+    setParsedData(null);
+
+    try {
+      // First, upload the file to the server
+      const { data, error } = await api.uploadResume(file);
+      if (error) {
+        setUploadError(error);
+        return;
+      }
+
+      // Show success message for upload
+      setUploadSuccessMessage(`Resume "${file.name}" uploaded successfully!`);
+      setUploadSuccess(true);
+
+      // Start parsing the resume
+      setIsParsing(true);
+      setShowParseForm(true);
+
+      try {
+        // Parse the resume using Gemini API
+        const parsedResumeData = await parseResumeWithGemini(file);
+        setParsedData(parsedResumeData);
+        setParseError('');
+      } catch (parseErr) {
+        console.error('Resume parsing error:', parseErr);
+        setParseError(parseErr instanceof Error ? parseErr.message : 'Failed to parse resume. Please try again.');
+        setParsedData(null);
+      } finally {
+        setIsParsing(false);
+      }
+
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setUploadSuccessMessage('');
+      }, 5000);
+
+    } catch (err) {
+      setUploadError('Failed to upload resume. Please try again.');
+      setShowParseForm(false);
+    } finally {
+      setUploadingResume(false);
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleParseConfirm = async (data: ParsedResumeData) => {
+    try {
+      // Here you would typically save the parsed data to your backend
+      console.log('Confirmed parsed data:', data);
+      setShowParseForm(false);
+      setParsedData(null);
+      // You might want to show a success message or update the UI
+    } catch (error) {
+      console.error('Error saving parsed data:', error);
+      setParseError('Failed to save resume details. Please try again.');
+    }
+  };
+
+  const handleParseReject = () => {
+    setShowParseForm(false);
+    setParsedData(null);
+    // You might want to show a message asking the user to try uploading again
   };
 
   return (
@@ -141,14 +241,55 @@ const DashboardPage = () => {
               </div>
 
               <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleResumeUpload}
+                  accept=".pdf,.doc,.docx"
+                  className="hidden"
+                />
                 <Button
                   variant="primary"
                   fullWidth
                   className="mb-3"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingResume}
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Resume
+                  {uploadingResume ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Resume
+                    </>
+                  )}
                 </Button>
+                <AnimatePresence>
+                  {uploadError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-3 p-2 bg-error-50 dark:bg-error-900/30 border border-error-200 dark:border-error-800 rounded-lg text-error-600 dark:text-error-400 text-sm"
+                    >
+                      {uploadError}
+                    </motion.div>
+                  )}
+                  {uploadSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="mb-3 p-2 bg-success-50 dark:bg-success-900/30 border border-success-200 dark:border-success-800 rounded-lg text-success-600 dark:text-success-400 text-sm flex items-center"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      {uploadSuccessMessage}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <Button
                   variant="outline"
                   fullWidth
@@ -347,6 +488,38 @@ const DashboardPage = () => {
         onClose={() => setShowLinkedInModal(false)}
         onSuccess={handleLinkedInSuccess}
       />
+
+      <ResumeParseForm
+        isOpen={showParseForm}
+        onClose={() => {
+          setShowParseForm(false);
+          setParseError('');
+          setParsedData(null);
+        }}
+        onConfirm={handleParseConfirm}
+        onReject={() => {
+          setShowParseForm(false);
+          setParseError('');
+          setParsedData(null);
+        }}
+        parsedData={parsedData}
+        isParsing={isParsing}
+        parseError={parseError}
+      />
+
+      <AnimatePresence>
+        {parseError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed top-4 right-4 p-4 bg-error-50 dark:bg-error-900/30 border border-error-200 dark:border-error-800 rounded-lg text-error-600 dark:text-error-400 text-sm flex items-center"
+          >
+            <AlertCircle className="w-4 h-4 mr-2" />
+            {parseError}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

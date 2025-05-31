@@ -12,35 +12,11 @@ export interface IUser extends Document {
     endDate?: Date;
   };
   linkedInId?: string;
-  linkedInData?: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    profilePicture?: string;
-    headline?: string;
-    summary?: string;
-    experience?: Array<{
-      title: string;
-      company: string;
-      startDate: string;
-      endDate?: string;
-      description?: string;
-    }>;
-    education?: Array<{
-      school: string;
-      degree: string;
-      fieldOfStudy: string;
-      startDate: string;
-      endDate?: string;
-    }>;
-    skills?: string[];
-    certifications?: Array<{
-      name: string;
-      issuer: string;
-      date: string;
-    }>;
-  };
+  linkedInData?: any;
+  resumeUrl?: string;
+  resumeUploadedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -83,33 +59,13 @@ const userSchema = new Schema<IUser>(
       sparse: true,
     },
     linkedInData: {
-      id: String,
-      firstName: String,
-      lastName: String,
-      email: String,
-      profilePicture: String,
-      headline: String,
-      summary: String,
-      experience: [{
-        title: String,
-        company: String,
-        startDate: String,
-        endDate: String,
-        description: String,
-      }],
-      education: [{
-        school: String,
-        degree: String,
-        fieldOfStudy: String,
-        startDate: String,
-        endDate: String,
-      }],
-      skills: [String],
-      certifications: [{
-        name: String,
-        issuer: String,
-        date: String,
-      }],
+      type: mongoose.Schema.Types.Mixed,
+    },
+    resumeUrl: {
+      type: String,
+    },
+    resumeUploadedAt: {
+      type: Date,
     },
   },
   {

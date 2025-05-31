@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Github, Linkedin, FileText, Upload, CheckCircle, Award } from 'lucide-react';
 import Button from '../components/ui/Button';
+import Icon from '../components/ui/Icon';
 import HeroImage from '../components/HeroImage';
 import FeatureCard from '../components/FeatureCard';
 import TestimonialCard from '../components/TestimonialCard';
@@ -137,7 +138,7 @@ const HomePage = () => {
           >
             <motion.div variants={itemAnimation} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 relative">
               <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mb-4">
-                <Upload className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                <Icon icon={Upload} className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Upload Your Resume</h3>
               <p className="text-gray-600 dark:text-gray-400">

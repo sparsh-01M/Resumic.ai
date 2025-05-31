@@ -54,6 +54,14 @@ interface ContactFormData {
   message: string;
 }
 
+interface ResumeUploadResponse {
+  id: string;
+  title: string;
+  url: string;
+  createdAt: string;
+  atsScore?: number;
+}
+
 export const api = {
   async login(email: string, password: string) {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -179,6 +187,30 @@ export const api = {
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch LinkedIn profile');
+      }
+
+      return { data };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
+    }
+  },
+
+  uploadResume: async (file: File): Promise<ApiResponse<ResumeUploadResponse>> => {
+    try {
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      const response = await fetch(`${API_URL}/resume/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload resume');
       }
 
       return { data };

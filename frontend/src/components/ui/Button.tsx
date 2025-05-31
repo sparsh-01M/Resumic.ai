@@ -1,31 +1,34 @@
-import React, { forwardRef, ButtonHTMLAttributes, ElementType } from 'react';
+import React, { forwardRef, ButtonHTMLAttributes, ElementType, ComponentPropsWithoutRef } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'light' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type BaseButtonProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  as?: ElementType;
-  href?: string;
   fullWidth?: boolean;
   isLoading?: boolean;
 };
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
+type ButtonProps<C extends ElementType> = {
+  as?: C;
+} & BaseButtonProps & Omit<ComponentPropsWithoutRef<C>, keyof BaseButtonProps>;
+
+const Button = forwardRef<HTMLButtonElement, ButtonProps<ElementType>>(
+  <C extends ElementType = 'button'>(
     {
       variant = 'primary',
       size = 'md',
-      as: Component = 'button',
+      as,
       children,
       className = '',
       fullWidth = false,
       isLoading = false,
       disabled = false,
       ...props
-    },
+    }: ButtonProps<C>,
     ref
   ) => {
     const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
@@ -69,7 +72,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       </>
     );
 
-    // Use motion.button for animation capabilities
+    const Component = as || 'button';
+
+    // Use motion.button for animation capabilities when it's a button
     if (Component === 'button') {
       return (
         <motion.button
@@ -77,7 +82,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           className={classes}
           disabled={disabled || isLoading}
           whileTap={{ scale: 0.98 }}
-          {...props}
+          {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}
         >
           {content}
         </motion.button>
