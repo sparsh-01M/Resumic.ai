@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { User } from '../models/User';
+import { User } from '../models/User.js';
 
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;

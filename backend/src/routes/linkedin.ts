@@ -1,6 +1,6 @@
 import express from 'express';
-import { linkedInController } from '../controllers/linkedin';
-import { auth } from '../middleware/auth';
+import { linkedInController } from '../controllers/linkedin.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 

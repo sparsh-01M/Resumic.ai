@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { LinkedInService } from '../services/linkedin';
-import { User } from '../models/User';
-import { auth } from '../middleware/auth';
+import { LinkedInService } from '../services/linkedin.js';
+import { User } from '../models/User.js';
+import { auth } from '../middleware/auth.js';
 
 export const linkedInController = {
   // Get LinkedIn OAuth URL
