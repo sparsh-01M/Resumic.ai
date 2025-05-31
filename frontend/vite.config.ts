@@ -5,18 +5,30 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   build: {
-    // Disable native modules
-    rollupOptions: {
-      external: ['@rollup/rollup-linux-x64-gnu'],
-    },
-    // Optimize for production
-    minify: 'terser',
+    // Use esbuild for minification instead of terser
+    minify: 'esbuild',
+    // Disable source maps in production
     sourcemap: false,
-    // Reduce chunk size warnings threshold
+    // Increase chunk size warning limit
     chunkSizeWarningLimit: 1000,
+    // Use a simpler build strategy
+    target: 'esnext',
+    // Disable code splitting for better compatibility
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   },
   // Optimize dependencies
   optimizeDeps: {
-    exclude: ['@rollup/rollup-linux-x64-gnu'],
+    // Force esbuild to handle dependencies
+    esbuildOptions: {
+      target: 'esnext'
+    }
   },
+  // Use esbuild for faster builds
+  esbuild: {
+    target: 'esnext'
+  }
 });
