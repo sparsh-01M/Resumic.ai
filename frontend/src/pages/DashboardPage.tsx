@@ -109,7 +109,7 @@ const DashboardPage = () => {
 
     try {
       // First, upload the file to the server
-      const { data, error } = await api.uploadResume(file);
+      const { error } = await api.uploadResume(file);
       if (error) {
         setUploadError(error);
         return;
@@ -165,12 +165,6 @@ const DashboardPage = () => {
       console.error('Error saving parsed data:', error);
       setParseError('Failed to save resume details. Please try again.');
     }
-  };
-
-  const handleParseReject = () => {
-    setShowParseForm(false);
-    setParsedData(null);
-    // You might want to show a message asking the user to try uploading again
   };
 
   return (

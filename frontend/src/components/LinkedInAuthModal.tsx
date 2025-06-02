@@ -27,6 +27,11 @@ const LinkedInAuthModal = ({ isOpen, onClose, onSuccess }: LinkedInAuthModalProp
         return;
       }
 
+      if (!data?.url) {
+        setError('Failed to get LinkedIn authorization URL');
+        return;
+      }
+
       // Open LinkedIn authorization in a popup window
       const width = 600;
       const height = 600;

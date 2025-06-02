@@ -118,7 +118,23 @@ export interface ParsedResumeData {
     institution: string;
     degree: string;
     field: string;
-    graduationYear: string;
+    graduationYear: string;  // Will store the end year (e.g., "2025" for "2021-2025" or "2019" for "2019")
+    startYear?: string;      // Optional start year for date ranges
+  }>;
+  certifications: Array<{
+    name: string;
+    issuer: string;
+    date: string;
+    url?: string;
+  }>;
+  achievements: Array<{
+    title: string;
+    type: 'achievement' | 'competition' | 'hackathon';
+    date: string;
+    description: string;
+    position?: string;  // e.g., "1st Place", "Runner Up", "Finalist"
+    organization?: string;  // e.g., "Google", "Microsoft", "University Name"
+    url?: string;  // Link to competition/achievement details
   }>;
   projects: Array<{
     name: string;
@@ -199,6 +215,18 @@ ARRAY FORMATTING RULES:
 6. Do not include empty strings in arrays
 7. Do not include null values in arrays
 
+EDUCATION DATE HANDLING:
+1. For graduationYear:
+   - If a date range is given (e.g., "2021-2025"), store "2025" as graduationYear and "2021" as startYear
+   - If only one year is given (e.g., "2019"), store that year as graduationYear
+   - If a month and year are given (e.g., "May 2023"), store just the year as graduationYear
+   - If "Expected" or "Anticipated" is mentioned, still store the year
+   - Always store years as strings
+2. For startYear:
+   - Only include if a date range is explicitly given
+   - Store as string
+   - Example: For "2021-2025", store graduationYear: "2025", startYear: "2021"
+
 REQUIRED JSON STRUCTURE:
 {
   "name": "Full name as string",
@@ -219,7 +247,27 @@ REQUIRED JSON STRUCTURE:
       "institution": "School/University name as string",
       "degree": "Degree name as string",
       "field": "Field of study as string",
-      "graduationYear": "Year as string"
+      "graduationYear": "End year as string (e.g., '2025' for '2021-2025' or '2019' for '2019')",
+      "startYear": "Start year as string (only if date range is given, e.g., '2021' for '2021-2025')"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Certification name as string",
+      "issuer": "Issuing organization as string",
+      "date": "Date earned as string",
+      "url": "Certificate URL as string or null"
+    }
+  ],
+  "achievements": [
+    {
+      "title": "Achievement/Competition/Hackathon name as string",
+      "type": "achievement|competition|hackathon",
+      "date": "Date as string",
+      "description": "Description of achievement as string",
+      "position": "Position/rank as string or null",
+      "organization": "Organizing body as string or null",
+      "url": "URL to achievement details as string or null"
     }
   ],
   "projects": [
@@ -237,13 +285,32 @@ REQUIRED JSON STRUCTURE:
 Remember: 
 1. Return ONLY the JSON object, nothing else
 2. Ensure the response is complete and properly closed
-3. Keep descriptions concise but complete`;
+3. Keep descriptions concise but complete
+4. Extract all certifications from the resume, including professional certifications, online courses, and training programs
+5. For certifications, include the full name of the certification, the issuing organization, and the date earned
+6. If a certification has a verification URL, include it in the url field
+7. Extract all achievements, competitions, and hackathons, including:
+   - Academic achievements and awards
+   - Coding competitions and hackathons
+   - Professional competitions and contests
+   - Scholarships and grants
+   - Recognition and honors
+   - Sports achievements (if relevant to professional development)
+8. For achievements:
+   - Include the type (achievement/competition/hackathon)
+   - Note the position/rank if applicable (e.g., "1st Place", "Runner Up")
+   - Include the organizing body or institution
+   - Add any relevant URLs for verification
+   - Provide a clear description of the achievement
+
+`;
 
       console.log('Sending request to Gemini API...');
       
       // Generate content with the image
       const result = await model.generateContent({
         contents: [{
+          role: 'user',
           parts: [
             { text: prompt },
             {
@@ -283,7 +350,8 @@ Remember:
         // Validate required fields and array types
         if (!parsedData.name || !parsedData.email || 
             !Array.isArray(parsedData.experience) || !Array.isArray(parsedData.education) || 
-            !Array.isArray(parsedData.skills) || !Array.isArray(parsedData.projects)) {
+            !Array.isArray(parsedData.skills) || !Array.isArray(parsedData.projects) ||
+            !Array.isArray(parsedData.certifications) || !Array.isArray(parsedData.achievements)) {
           console.error('Invalid JSON structure. Parsed data:', parsedData);
           throw new Error('Invalid JSON structure: Missing required fields');
         }
@@ -303,6 +371,24 @@ Remember:
         parsedData.skills.forEach((skill, index) => {
           if (typeof skill !== 'string' || !skill.trim()) {
             throw new Error(`Invalid skill at index ${index}: must be a non-empty string`);
+          }
+        });
+
+        // Validate education dates
+        parsedData.education.forEach((edu, index) => {
+          if (!edu.graduationYear || typeof edu.graduationYear !== 'string') {
+            throw new Error(`Invalid graduation year at education index ${index}: must be a string`);
+          }
+          if (edu.startYear && typeof edu.startYear !== 'string') {
+            throw new Error(`Invalid start year at education index ${index}: must be a string`);
+          }
+          // Validate year format (should be 4 digits)
+          const yearRegex = /^\d{4}$/;
+          if (!yearRegex.test(edu.graduationYear)) {
+            throw new Error(`Invalid graduation year format at education index ${index}: must be a 4-digit year`);
+          }
+          if (edu.startYear && !yearRegex.test(edu.startYear)) {
+            throw new Error(`Invalid start year format at education index ${index}: must be a 4-digit year`);
           }
         });
 

@@ -1,10 +1,14 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '../services/api';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
+  subscription?: {
+    plan: 'free' | 'pro' | 'teams';
+    status: 'active' | 'inactive';
+  };
 }
 
 interface AuthContextType {

@@ -1,3 +1,5 @@
+import { User } from '../contexts/AuthContext';
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
 interface ApiResponse<T> {
@@ -62,8 +64,22 @@ interface ResumeUploadResponse {
   atsScore?: number;
 }
 
+interface RegisterResponse {
+  token: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+interface LoginResponse {
+  token: string;
+  user: User;
+}
+
 export const api = {
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
@@ -72,10 +88,10 @@ export const api = {
       body: JSON.stringify({ email, password }),
     });
 
-    return handleResponse(response);
+    return handleResponse<LoginResponse>(response);
   },
 
-  async register(name: string, email: string, password: string) {
+  async register(name: string, email: string, password: string): Promise<ApiResponse<RegisterResponse>> {
     const response = await fetch(`${API_URL}/auth/register`, {
       method: 'POST',
       headers: {
@@ -84,7 +100,7 @@ export const api = {
       body: JSON.stringify({ name, email, password }),
     });
 
-    return handleResponse(response);
+    return handleResponse<RegisterResponse>(response);
   },
 
   async getProfile(token: string) {
@@ -153,7 +169,7 @@ export const api = {
     }
   },
 
-  disconnectLinkedIn: async (): Promise<ApiResponse> => {
+  disconnectLinkedIn: async (): Promise<ApiResponse<void>> => {
     try {
       const response = await fetch(`${API_URL}/auth/linkedin/disconnect`, {
         method: 'POST',

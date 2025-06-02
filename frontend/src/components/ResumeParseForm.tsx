@@ -20,15 +20,31 @@ interface ParsedResumeData {
     degree: string;
     field: string;
     graduationYear: string;
+    startYear?: string;
   }>;
-  skills: string[];
+  certifications: Array<{
+    name: string;
+    issuer: string;
+    date: string;
+    url?: string;
+  }>;
+  achievements: Array<{
+    title: string;
+    type: 'achievement' | 'competition' | 'hackathon';
+    date: string;
+    description: string;
+    position?: string;
+    organization?: string;
+    url?: string;
+  }>;
   projects: Array<{
     name: string;
     description: string;
     technologies: string[];
-    duration: string;
+    duration?: string;
     url?: string;
   }>;
+  skills: string[];
 }
 
 interface ResumeParseFormProps {
@@ -235,7 +251,7 @@ const ResumeParseForm = ({
                 </h3>
                 {parsedData.education.map((edu, index) => (
                   <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Institution
@@ -244,31 +260,355 @@ const ResumeParseForm = ({
                           type="text"
                           value={edu.institution}
                           onChange={(e) => {
-                            const newEdu = [...parsedData.education];
-                            newEdu[index] = { ...edu, institution: e.target.value };
-                            setFormData({ ...parsedData, education: newEdu });
+                            const newEducation = [...parsedData.education];
+                            newEducation[index] = { ...edu, institution: e.target.value };
+                            setFormData({ ...parsedData, education: newEducation });
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Degree
+                          </label>
+                          <input
+                            type="text"
+                            value={edu.degree}
+                            onChange={(e) => {
+                              const newEducation = [...parsedData.education];
+                              newEducation[index] = { ...edu, degree: e.target.value };
+                              setFormData({ ...parsedData, education: newEducation });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Field of Study
+                          </label>
+                          <input
+                            type="text"
+                            value={edu.field}
+                            onChange={(e) => {
+                              const newEducation = [...parsedData.education];
+                              newEducation[index] = { ...edu, field: e.target.value };
+                              setFormData({ ...parsedData, education: newEducation });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Start Year (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={edu.startYear || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Only allow 4-digit years
+                              if (value === '' || /^\d{4}$/.test(value)) {
+                                const newEducation = [...parsedData.education];
+                                newEducation[index] = { 
+                                  ...edu, 
+                                  startYear: value || undefined 
+                                };
+                                setFormData({ ...parsedData, education: newEducation });
+                              }
+                            }}
+                            placeholder="e.g., 2021"
+                            pattern="\d{4}"
+                            maxLength={4}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Graduation Year
+                          </label>
+                          <input
+                            type="text"
+                            value={edu.graduationYear}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Only allow 4-digit years
+                              if (/^\d{4}$/.test(value)) {
+                                const newEducation = [...parsedData.education];
+                                newEducation[index] = { ...edu, graduationYear: value };
+                                setFormData({ ...parsedData, education: newEducation });
+                              }
+                            }}
+                            placeholder="e.g., 2025"
+                            pattern="\d{4}"
+                            maxLength={4}
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newEducation = [...parsedData.education, {
+                      institution: '',
+                      degree: '',
+                      field: '',
+                      graduationYear: '',
+                      startYear: undefined
+                    }];
+                    setFormData({ ...parsedData, education: newEducation });
+                  }}
+                  className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  + Add Education
+                </button>
+              </div>
+
+              {/* Certifications */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Certifications
+                </h3>
+                {parsedData.certifications.map((cert, index) => (
+                  <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Certification Name
+                        </label>
+                        <input
+                          type="text"
+                          value={cert.name}
+                          onChange={(e) => {
+                            const newCerts = [...parsedData.certifications];
+                            newCerts[index] = { ...cert, name: e.target.value };
+                            setFormData({ ...parsedData, certifications: newCerts });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Degree
+                          Issuing Organization
                         </label>
                         <input
                           type="text"
-                          value={edu.degree}
+                          value={cert.issuer}
                           onChange={(e) => {
-                            const newEdu = [...parsedData.education];
-                            newEdu[index] = { ...edu, degree: e.target.value };
-                            setFormData({ ...parsedData, education: newEdu });
+                            const newCerts = [...parsedData.certifications];
+                            newCerts[index] = { ...cert, issuer: e.target.value };
+                            setFormData({ ...parsedData, certifications: newCerts });
                           }}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Date Earned
+                        </label>
+                        <input
+                          type="text"
+                          value={cert.date}
+                          onChange={(e) => {
+                            const newCerts = [...parsedData.certifications];
+                            newCerts[index] = { ...cert, date: e.target.value };
+                            setFormData({ ...parsedData, certifications: newCerts });
+                          }}
+                          placeholder="e.g., January 2023"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Certificate URL (Optional)
+                        </label>
+                        <input
+                          type="url"
+                          value={cert.url || ''}
+                          onChange={(e) => {
+                            const newCerts = [...parsedData.certifications];
+                            newCerts[index] = { ...cert, url: e.target.value };
+                            setFormData({ ...parsedData, certifications: newCerts });
+                          }}
+                          placeholder="e.g., https://certificate-url.com"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
                       </div>
                     </div>
                   </div>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newCerts = [...parsedData.certifications, {
+                      name: '',
+                      issuer: '',
+                      date: '',
+                      url: ''
+                    }];
+                    setFormData({ ...parsedData, certifications: newCerts });
+                  }}
+                  className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  + Add Certification
+                </button>
+              </div>
+
+              {/* Achievements */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Achievements & Competitions
+                </h3>
+                {parsedData.achievements.map((achievement, index) => (
+                  <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Title
+                          </label>
+                          <input
+                            type="text"
+                            value={achievement.title}
+                            onChange={(e) => {
+                              const newAchievements = [...parsedData.achievements];
+                              newAchievements[index] = { ...achievement, title: e.target.value };
+                              setFormData({ ...parsedData, achievements: newAchievements });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Type
+                          </label>
+                          <select
+                            value={achievement.type}
+                            onChange={(e) => {
+                              const newAchievements = [...parsedData.achievements];
+                              newAchievements[index] = { 
+                                ...achievement, 
+                                type: e.target.value as 'achievement' | 'competition' | 'hackathon' 
+                              };
+                              setFormData({ ...parsedData, achievements: newAchievements });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          >
+                            <option value="achievement">Achievement</option>
+                            <option value="competition">Competition</option>
+                            <option value="hackathon">Hackathon</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Date
+                          </label>
+                          <input
+                            type="text"
+                            value={achievement.date}
+                            onChange={(e) => {
+                              const newAchievements = [...parsedData.achievements];
+                              newAchievements[index] = { ...achievement, date: e.target.value };
+                              setFormData({ ...parsedData, achievements: newAchievements });
+                            }}
+                            placeholder="e.g., January 2023"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Position/Rank (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={achievement.position || ''}
+                            onChange={(e) => {
+                              const newAchievements = [...parsedData.achievements];
+                              newAchievements[index] = { ...achievement, position: e.target.value };
+                              setFormData({ ...parsedData, achievements: newAchievements });
+                            }}
+                            placeholder="e.g., 1st Place, Runner Up"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Organization (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={achievement.organization || ''}
+                          onChange={(e) => {
+                            const newAchievements = [...parsedData.achievements];
+                            newAchievements[index] = { ...achievement, organization: e.target.value };
+                            setFormData({ ...parsedData, achievements: newAchievements });
+                          }}
+                          placeholder="e.g., Google, Microsoft, University Name"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          value={achievement.description}
+                          onChange={(e) => {
+                            const newAchievements = [...parsedData.achievements];
+                            newAchievements[index] = { ...achievement, description: e.target.value };
+                            setFormData({ ...parsedData, achievements: newAchievements });
+                          }}
+                          rows={3}
+                          placeholder="Describe the achievement, competition, or hackathon"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          URL (Optional)
+                        </label>
+                        <input
+                          type="url"
+                          value={achievement.url || ''}
+                          onChange={(e) => {
+                            const newAchievements = [...parsedData.achievements];
+                            newAchievements[index] = { ...achievement, url: e.target.value };
+                            setFormData({ ...parsedData, achievements: newAchievements });
+                          }}
+                          placeholder="e.g., https://competition-website.com/results"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newAchievements = [...parsedData.achievements, {
+                      title: '',
+                      type: 'achievement' as const,
+                      date: '',
+                      description: '',
+                      position: '',
+                      organization: '',
+                      url: ''
+                    }];
+                    setFormData({ ...parsedData, achievements: newAchievements });
+                  }}
+                  className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  + Add Achievement
+                </button>
               </div>
 
               {/* Projects */}

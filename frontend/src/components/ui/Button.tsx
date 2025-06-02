@@ -1,5 +1,5 @@
-import React, { forwardRef, ButtonHTMLAttributes, ElementType, ComponentPropsWithoutRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { forwardRef, ButtonHTMLAttributes, ElementType, ComponentPropsWithRef } from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'light' | 'danger';
@@ -14,7 +14,7 @@ type BaseButtonProps = {
 
 type ButtonProps<C extends ElementType> = {
   as?: C;
-} & BaseButtonProps & Omit<ComponentPropsWithoutRef<C>, keyof BaseButtonProps>;
+} & BaseButtonProps & Omit<ComponentPropsWithRef<C>, keyof BaseButtonProps | 'as'>;
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps<ElementType>>(
   <C extends ElementType = 'button'>(
@@ -29,7 +29,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps<ElementType>>(
       disabled = false,
       ...props
     }: ButtonProps<C>,
-    ref
+    ref: React.ForwardedRef<HTMLButtonElement>
   ) => {
     const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
     
@@ -82,7 +82,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps<ElementType>>(
           className={classes}
           disabled={disabled || isLoading}
           whileTap={{ scale: 0.98 }}
-          {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}
+          {...(props as HTMLMotionProps<"button">)}
         >
           {content}
         </motion.button>
@@ -90,10 +90,15 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps<ElementType>>(
     }
 
     // For other components like Link
+    const PolymorphicComponent = Component as React.ComponentType<any>;
     return (
-      <Component className={classes} {...props}>
+      <PolymorphicComponent 
+        ref={ref}
+        className={classes} 
+        {...props}
+      >
         {content}
-      </Component>
+      </PolymorphicComponent>
     );
   }
 );
