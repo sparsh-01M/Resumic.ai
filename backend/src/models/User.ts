@@ -1,15 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-interface GitHubProject {
-  name: string;
-  description: string;
-  languages: string[];
-  level: 'basic' | 'intermediate' | 'advanced';
-  atsPoints: string[];
-  url: string;
-}
-
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -25,8 +16,6 @@ export interface IUser extends Document {
   resumeUrl?: string;
   resumeUploadedAt?: Date;
   linkedinId?: string;
-  githubUsername?: string;
-  githubProjects?: GitHubProject[];
   skills: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -85,22 +74,6 @@ const userSchema = new Schema<IUser>(
       unique: true,
       sparse: true,
     },
-    githubUsername: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    githubProjects: [{
-      name: String,
-      description: String,
-      languages: [String],
-      level: {
-        type: String,
-        enum: ['basic', 'intermediate', 'advanced'],
-      },
-      atsPoints: [String],
-      url: String,
-    }],
     skills: {
       type: [String],
       default: [],
