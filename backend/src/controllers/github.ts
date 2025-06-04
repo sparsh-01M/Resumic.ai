@@ -20,6 +20,14 @@ interface GitHubProject {
   url: string;
 }
 
+interface GitHubRepo {
+  name: string;
+  description: string | null;
+  html_url: string;
+  language: string | null;
+  topics: string[];
+}
+
 export const parseGitHubProfile = async (req: Request, res: Response) => {
   try {
     const { username } = req.body;

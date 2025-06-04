@@ -1,6 +1,14 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
+import { Request } from 'express';
+
+// Add type declaration for Express.Multer
+declare global {
+  namespace Express {
+    interface Multer extends multer.Multer {}
+  }
+}
 
 // Configure Cloudinary
 cloudinary.config({
