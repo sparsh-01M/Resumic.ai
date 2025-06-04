@@ -5,7 +5,7 @@ import { GitHubProject } from '../models/GitHubProject.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY || '';
 
 if (!GITHUB_TOKEN) {
   console.error('GitHub token is not configured. Please add GITHUB_TOKEN to your environment variables.');
@@ -172,7 +172,7 @@ export const connectGitHubProfile = async (req: Request, res: Response) => {
     // Get user's top repositories
     const repos = await octokit.repos.listForUser({
       username,
-      sort: 'stars',
+      sort: 'updated' as const,
       per_page: 6
     });
 
