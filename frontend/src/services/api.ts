@@ -7,36 +7,6 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-interface LinkedInUserData {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  profilePicture?: string;
-  headline?: string;
-  summary?: string;
-  experience?: Array<{
-    title: string;
-    company: string;
-    startDate: string;
-    endDate?: string;
-    description?: string;
-  }>;
-  education?: Array<{
-    school: string;
-    degree: string;
-    fieldOfStudy: string;
-    startDate: string;
-    endDate?: string;
-  }>;
-  skills?: string[];
-  certifications?: Array<{
-    name: string;
-    issuer: string;
-    date: string;
-  }>;
-}
-
 async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
   const data = await response.json();
   
@@ -76,6 +46,20 @@ interface RegisterResponse {
 interface LoginResponse {
   token: string;
   user: User;
+}
+
+interface GitHubAuthUrlResponse {
+  url: string;
+}
+
+interface GitHubProfileResponse {
+  success: boolean;
+  message: string;
+}
+
+interface LinkedInProfileResponse {
+  success: boolean;
+  message: string;
 }
 
 export const api = {
@@ -125,92 +109,6 @@ export const api = {
     return handleResponse(response);
   },
 
-  // LinkedIn Authentication
-  getLinkedInAuthUrl: async (): Promise<ApiResponse<{ url: string }>> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/linkedin/url`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get LinkedIn auth URL');
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
-    }
-  },
-
-  handleLinkedInCallback: async (code: string): Promise<ApiResponse<LinkedInUserData>> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/linkedin/callback`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ code }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to authenticate with LinkedIn');
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
-    }
-  },
-
-  disconnectLinkedIn: async (): Promise<ApiResponse<void>> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/linkedin/disconnect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to disconnect LinkedIn account');
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
-    }
-  },
-
-  getLinkedInProfile: async (): Promise<ApiResponse<LinkedInUserData>> => {
-    try {
-      const response = await fetch(`${API_URL}/auth/linkedin/profile`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch LinkedIn profile');
-      }
-
-      return { data };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
-    }
-  },
-
   uploadResume: async (file: File): Promise<ApiResponse<ResumeUploadResponse>> => {
     try {
       const formData = new FormData();
@@ -232,6 +130,54 @@ export const api = {
       return { data };
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'An unexpected error occurred' };
+    }
+  },
+
+  async getGitHubAuthUrl(): Promise<ApiResponse<GitHubAuthUrlResponse>> {
+    try {
+      const response = await fetch(`${API_URL}/auth/github/url`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      return handleResponse<GitHubAuthUrlResponse>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to get GitHub auth URL' };
+    }
+  },
+
+  async connectGitHubProfile(githubUrl: string): Promise<ApiResponse<GitHubProfileResponse>> {
+    try {
+      const response = await fetch(`${API_URL}/auth/github/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ githubUrl }),
+      });
+
+      return handleResponse<GitHubProfileResponse>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to connect GitHub profile' };
+    }
+  },
+
+  async connectLinkedInProfile(linkedinUrl: string): Promise<ApiResponse<LinkedInProfileResponse>> {
+    try {
+      const response = await fetch(`${API_URL}/auth/linkedin/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({ linkedinUrl }),
+      });
+
+      return handleResponse<LinkedInProfileResponse>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to connect LinkedIn profile' };
     }
   },
 

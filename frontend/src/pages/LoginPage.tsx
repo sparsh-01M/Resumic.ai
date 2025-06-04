@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Github, Linkedin, FileText, Eye, EyeOff } from 'lucide-react';
+import { Github, FileText, Eye, EyeOff } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -162,14 +162,10 @@ const LoginPage = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="mt-6 grid grid-cols-1 gap-3">
                   <Button variant="outline" fullWidth className="flex items-center justify-center">
                     <Github className="w-5 h-5 mr-2" />
                     GitHub
-                  </Button>
-                  <Button variant="outline" fullWidth className="flex items-center justify-center">
-                    <Linkedin className="w-5 h-5 mr-2" />
-                    LinkedIn
                   </Button>
                 </div>
               </div>

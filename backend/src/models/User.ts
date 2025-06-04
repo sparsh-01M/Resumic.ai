@@ -11,11 +11,8 @@ export interface IUser extends Document {
     startDate?: Date;
     endDate?: Date;
   };
-  linkedInId?: string;
-  linkedInData?: any;
   resumeUrl?: string;
   resumeUploadedAt?: Date;
-  linkedinId?: string;
   skills: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -55,24 +52,11 @@ const userSchema = new Schema<IUser>(
       startDate: Date,
       endDate: Date,
     },
-    linkedInId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-    linkedInData: {
-      type: mongoose.Schema.Types.Mixed,
-    },
     resumeUrl: {
       type: String,
     },
     resumeUploadedAt: {
       type: Date,
-    },
-    linkedinId: {
-      type: String,
-      unique: true,
-      sparse: true,
     },
     skills: {
       type: [String],

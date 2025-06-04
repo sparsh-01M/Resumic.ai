@@ -3,27 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Upload, Clipboard, Plus, Github, Linkedin, CheckCircle, File, Award, AlertCircle, Loader2 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
-import LinkedInAuthModal from '../components/LinkedInAuthModal';
 import ResumeParseForm from '../components/ResumeParseForm';
+import GitHubConnectModal from '../components/GitHubConnectModal';
+import LinkedInConnectModal from '../components/LinkedInConnectModal';
 import { api } from '../services/api';
 import { parseResumeWithGemini, ParsedResumeData } from '../services/gemini';
-import GitHubAuthModal from '../components/GitHubAuthModal';
-
-interface GitHubProject {
-  name: string;
-  description: string;
-  languages: string[];
-  level: 'beginner' | 'intermediate' | 'advanced';
-  atsPoints: string[];
-  url: string;
-}
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
-  // const [linkedInData, setLinkedInData] = useState<any>(null);
-  // const [linkedInError, setLinkedInError] = useState('');
-  // const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -33,6 +20,10 @@ const DashboardPage = () => {
   const [parsedData, setParsedData] = useState<ParsedResumeData | null>(null);
   const [parseError, setParseError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showGitHubModal, setShowGitHubModal] = useState(false);
+  const [showLinkedInModal, setShowLinkedInModal] = useState(false);
+  const [loadingGitHub, setLoadingGitHub] = useState(false);
+  const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
   const resumes = [
     {
       id: 1,
@@ -51,51 +42,6 @@ const DashboardPage = () => {
       template: 'Professional',
     },
   ];
-  const [showGitHubModal, setShowGitHubModal] = useState(false);
-  const [githubProjects, setGithubProjects] = useState<GitHubProject[]>([]);
-  const [githubSkills, setGithubSkills] = useState<string[]>([]);
-
-  // useEffect(() => {
-    // Check if user has LinkedIn connected
-  //   const checkLinkedInConnection = async () => {
-  //     try {
-  //       const { data, error } = await api.getLinkedInProfile();
-  //       if (error) {
-  //         if (error !== 'LinkedIn not connected') {
-  //           setLinkedInError(error);
-  //         }
-  //         return;
-  //       }
-  //       setLinkedInData(data);
-  //     } catch (err) {
-  //       console.error('Error checking LinkedIn connection:', err);
-  //     }
-  //   };
-
-  //   checkLinkedInConnection();
-  // }, []);
-
-  // const handleLinkedInSuccess = async (data: any) => {
-  //   setLinkedInData(data);
-  //   // You might want to update the user's profile or show a success message
-  // };
-
-  // const handleDisconnectLinkedIn = async () => {
-  //   setLoadingLinkedIn(true);
-  //   try {
-  //     const { error } = await api.disconnectLinkedIn();
-  //     if (error) {
-  //       setLinkedInError(error);
-  //       return;
-  //     }
-  //     setLinkedInData(null);
-  //   } catch (err) {
-  //     setLinkedInError('Failed to disconnect LinkedIn account');
-  //     console.error('LinkedIn disconnect error:', err);
-  //   } finally {
-  //     setLoadingLinkedIn(false);
-  //   }
-  // };
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -180,10 +126,42 @@ const DashboardPage = () => {
     }
   };
 
-  const handleGitHubSuccess = (data: { projects: GitHubProject[]; skills: string[] }) => {
-    setGithubProjects(data.projects);
-    setGithubSkills(data.skills);
-    // You might want to update the user's skills in the global state here
+  const handleGitHubConnect = () => {
+    setShowGitHubModal(true);
+  };
+
+  const handleLinkedInConnect = () => {
+    setShowLinkedInModal(true);
+  };
+
+  const handleGitHubSubmit = async (githubUrl: string) => {
+    setLoadingGitHub(true);
+    try {
+      const { data, error } = await api.connectGitHubProfile(githubUrl);
+      if (error) {
+        throw new Error(error);
+      }
+      setShowGitHubModal(false);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoadingGitHub(false);
+    }
+  };
+
+  const handleLinkedInSubmit = async (linkedinUrl: string) => {
+    setLoadingLinkedIn(true);
+    try {
+      const { data, error } = await api.connectLinkedInProfile(linkedinUrl);
+      if (error) {
+        throw new Error(error);
+      }
+      setShowLinkedInModal(false);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoadingLinkedIn(false);
+    }
   };
 
   return (
@@ -219,22 +197,29 @@ const DashboardPage = () => {
                     <FileText className="w-5 h-5" />
                     <span>My Resumes</span>
                   </a>
-                  <a
-                    href="#"
-                    className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <Github className="w-5 h-5" />
-                    <span>GitHub Integration</span>
-                  </a>
                   <button
-                    onClick={() => setShowLinkedInModal(true)}
-                    className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={handleGitHubConnect}
+                    disabled={loadingGitHub}
+                    className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Linkedin className="w-5 h-5" />
+                    {loadingGitHub ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Github className="w-5 h-5" />
+                    )}
+                    <span>GitHub Integration</span>
+                  </button>
+                  <button
+                    onClick={handleLinkedInConnect}
+                    disabled={loadingLinkedIn}
+                    className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingLinkedIn ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Linkedin className="w-5 h-5" />
+                    )}
                     <span>LinkedIn Integration</span>
-                    {/* {linkedInData && (
-                      <CheckCircle className="w-4 h-4 text-success-500 ml-auto" />
-                    )} */}
                   </button>
                   <a
                     href="#"
@@ -389,73 +374,34 @@ const DashboardPage = () => {
                 <Button 
                   variant="light" 
                   size="sm"
-                  onClick={() => setShowGitHubModal(true)}
+                  onClick={handleGitHubConnect}
+                  disabled={loadingGitHub}
+                  isLoading={loadingGitHub}
                 >
                   <Github className="w-4 h-4 mr-2" />
                   Connect GitHub
                 </Button>
               </div>
 
-              {/* <div className="bg-gradient-to-br from-secondary-500 to-secondary-600 dark:from-secondary-600 dark:to-secondary-800 rounded-xl shadow-md p-6 text-white">
-                <h3 className="text-xl font-semibold mb-2">Sync with LinkedIn</h3>
-                <p className="mb-4 text-secondary-100"> */}
-                  {/* {linkedInData
-                    ? 'Your LinkedIn profile is connected. Import your professional experience and skills.'
-                    : 'Import your professional experience and skills from your LinkedIn profile.'} */}
-                {/* </p> */}
-                {/* {linkedInError && (
-                  <div className="mb-4 p-3 bg-error-500/20 rounded-lg flex items-center">
-                    <AlertCircle className="w-5 h-5 mr-2" />
-                    <span className="text-sm">{linkedInError}</span>
-                  </div>
-                )} */}
-                {/* {linkedInData ? (
-                  <div className="flex space-x-3">
-                    <Button
-                      variant="light"
-                      size="sm"
-                      onClick={() => setShowLinkedInModal(true)}
-                    >
-                      <Linkedin className="w-4 h-4 mr-2" />
-                      Update Profile
-                    </Button>
-                    <Button
-                      variant="light"
-                      size="sm"
-                      onClick={handleDisconnectLinkedIn}
-                      disabled={loadingLinkedIn}
-                    >
-                      {loadingLinkedIn ? 'Disconnecting...' : 'Disconnect'}
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="light"
-                    size="sm"
-                    onClick={() => setShowLinkedInModal(true)}
-                  >
-                    <Linkedin className="w-4 h-4 mr-2" />
-                    Connect LinkedIn
-                  </Button>
-                )} */}
-              {/* </div> */}
-
-
-
-              {/* <div className="bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-800 rounded-xl shadow-md p-6 text-white">
-                <h3 className="text-xl font-semibold mb-2">Sync with LinkedIn</h3>
+              <div className="bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-800 rounded-xl shadow-md p-6 text-white">
+                <h3 className="text-xl font-semibold mb-2">Connect your LinkedIn</h3>
                 <p className="mb-4 text-primary-100">
-                  Link your LinkedIn profile to automatically fetch your experiences and achievements for the resume.
+                  Link your LinkedIn profile to automatically extract details for your resume.
                 </p>
-                <Button variant="light" size="sm">
-                  <Github className="w-4 h-4 mr-2" />
+                <Button 
+                  variant="light" 
+                  size="sm"
+                  onClick={handleLinkedInConnect}
+                  disabled={loadingLinkedIn}
+                  isLoading={loadingLinkedIn}
+                >
+                  <Linkedin className="w-4 h-4 mr-2" />
                   Connect LinkedIn
                 </Button>
-              </div> */}
-
-
-
+              </div>
             </motion.div>
+
+            
 
             {/* Resumes */}
             <motion.div
@@ -516,12 +462,6 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* <LinkedInAuthModal
-        isOpen={showLinkedInModal}
-        onClose={() => setShowLinkedInModal(false)}
-        onSuccess={handleLinkedInSuccess}
-      /> */}
-
       <ResumeParseForm
         isOpen={showParseForm}
         onClose={() => {
@@ -554,93 +494,17 @@ const DashboardPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Display GitHub Projects */}
-      {githubProjects.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            GitHub Projects
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {githubProjects.map((project, index) => (
-              <div
-                key={index}
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {project.name}
-                  </h3>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    project.level === 'advanced' 
-                      ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                      : project.level === 'intermediate'
-                      ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                      : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  }`}>
-                    {project.level}
-                  </span>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {project.description}
-                </p>
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    ATS-Friendly Points:
-                  </h4>
-                  <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    {project.atsPoints.map((point: string, i: number) => (
-                      <li key={i}>{point}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.languages.map((lang: string, i: number) => (
-                    <span
-                      key={i}
-                      className="px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-xs"
-                    >
-                      {lang}
-                    </span>
-                  ))}
-                </div>
-                <a
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary-600 dark:text-primary-400 hover:underline text-sm"
-                >
-                  View on GitHub →
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Display GitHub Skills */}
-      {githubSkills.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Skills from GitHub
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {githubSkills.map((skill, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* GitHub Modal */}
-      <GitHubAuthModal
+      {/* GitHub Connect Modal */}
+      <GitHubConnectModal
         isOpen={showGitHubModal}
         onClose={() => setShowGitHubModal(false)}
-        onSuccess={handleGitHubSuccess}
+        onSubmit={handleGitHubSubmit}
+      />
+
+      <LinkedInConnectModal
+        isOpen={showLinkedInModal}
+        onClose={() => setShowLinkedInModal(false)}
+        onSubmit={handleLinkedInSubmit}
       />
     </div>
   );

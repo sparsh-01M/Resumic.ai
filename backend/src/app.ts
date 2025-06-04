@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
-import linkedinRoutes from './routes/linkedin.js';
 import resumeRoutes from './routes/resume.js';
 
 const app = express();
@@ -13,7 +12,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/linkedin', linkedinRoutes);
 app.use('/api/resume', resumeRoutes);
 
 // Error handling middleware

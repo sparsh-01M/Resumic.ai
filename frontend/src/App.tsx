@@ -8,7 +8,6 @@ import ContactPage from './pages/ContactPage';
 import DashboardPage from './pages/DashboardPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import LinkedInCallback from './pages/LinkedInCallback';
 
 function App() {
   return (
@@ -23,7 +22,6 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/auth/linkedin/callback" element={<LinkedInCallback />} />
         </Routes>
       </main>
       <Footer />
