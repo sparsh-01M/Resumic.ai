@@ -1,39 +1,53 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Github, X, Loader2 } from 'lucide-react';
+import { Github, X, Loader2, Check } from 'lucide-react';
 import Button from './ui/Button';
+import { parseGitHubProfile, displayProjects } from '../services/github';
+import type { GitHubProject } from '../services/github';
+import { api } from '../services/api';
 
 interface GitHubConnectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (githubUrl: string) => Promise<void>;
+  onSuccess?: () => void;
 }
 
-const GitHubConnectModal = ({ isOpen, onClose, onSubmit }: GitHubConnectModalProps) => {
+const GitHubConnectModal = ({ isOpen, onClose, onSubmit, onSuccess }: GitHubConnectModalProps) => {
   const [githubUrl, setGithubUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [connected, setConnected] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    
-    // Basic URL validation
-    if (!githubUrl.trim()) {
-      setError('Please enter your GitHub profile URL');
-      return;
-    }
-
-    // Validate GitHub URL format
-    const githubUrlPattern = /^https?:\/\/(www\.)?github\.com\/[\w-]+$/;
-    if (!githubUrlPattern.test(githubUrl.trim())) {
-      setError('Please enter a valid GitHub profile URL (e.g., https://github.com/username)');
-      return;
-    }
+    if (!githubUrl) return;
 
     setLoading(true);
+    setError('');
+
     try {
-      await onSubmit(githubUrl.trim());
+      // Extract username from GitHub URL
+      const username = githubUrl.match(/github\.com\/([^\/]+)/)?.[1];
+      if (!username) {
+        throw new Error('Invalid GitHub URL format');
+      }
+
+      // First connect the GitHub profile
+      await onSubmit(githubUrl);
+      
+      // Then analyze the profile
+      const profile = await parseGitHubProfile(username);
+      displayProjects(profile);
+      
+      // Notify parent component of success
+      onSuccess?.();
+      
+      // Close modal after a short delay to show success state
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect GitHub profile');
     } finally {
@@ -103,7 +117,7 @@ const GitHubConnectModal = ({ isOpen, onClose, onSubmit }: GitHubConnectModalPro
                   </p>
                 )}
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  Enter your public GitHub profile URL to connect your account
+                  Enter your public GitHub profile URL to connect your account and analyze your projects
                 </p>
               </div>
 
@@ -112,20 +126,25 @@ const GitHubConnectModal = ({ isOpen, onClose, onSubmit }: GitHubConnectModalPro
                   type="button"
                   variant="outline"
                   onClick={onClose}
-                  disabled={loading}
+                  disabled={loading || connected}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  variant="primary"
-                  disabled={loading}
+                  variant={connected ? "success" : "primary"}
+                  disabled={loading || connected}
                   isLoading={loading}
                 >
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Connecting...
+                      {analyzing ? 'Analyzing Projects...' : 'Connecting...'}
+                    </>
+                  ) : connected ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      GitHub Connected
                     </>
                   ) : (
                     <>

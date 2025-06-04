@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User, IUser } from '../models/User.js';
+import { User, IUser, ParsedResumeData } from '../models/User.js';
 import { uploadToCloudinary } from '../services/cloudinary.js';
 
 interface RequestWithFile extends Request {
@@ -74,6 +74,88 @@ export const uploadResume = async (req: RequestWithFile, res: Response) => {
     res.status(500).json({ 
       error: 'Failed to upload resume',
       details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+export const saveParsedResume = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    const parsedData: ParsedResumeData = req.body;
+    console.log('Saving parsed resume data for user:', userId);
+    console.log('Data summary:', {
+      name: parsedData.name,
+      email: parsedData.email,
+      experienceCount: parsedData.experience.length,
+      educationCount: parsedData.education.length,
+      projectsCount: parsedData.projects.length,
+      skillsCount: parsedData.skills.length
+    });
+
+    // Update user with parsed resume data
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          name: parsedData.name,
+          email: parsedData.email,
+          skills: parsedData.skills,
+          parsedResume: {
+            ...parsedData,
+            parsedAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      console.log('User not found after update');
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    console.log('✅ Successfully saved parsed resume data to MongoDB');
+    console.log('Updated user document:', {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      skillsCount: user.skills.length,
+      parsedAt: user.parsedResume?.parsedAt
+    });
+
+    res.json({
+      success: true,
+      message: 'Resume data saved successfully',
+      data: {
+        name: user.name,
+        email: user.email,
+        skills: user.skills,
+        parsedAt: user.parsedResume?.parsedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error saving parsed resume data:', error);
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save resume data',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }; 

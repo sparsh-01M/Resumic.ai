@@ -131,7 +131,7 @@ const ResumeParseForm = ({
                 Try Again
               </Button>
             </div>
-          ) : parsedData ? (
+          ) : (
             <div className="space-y-6">
               {/* Personal Information */}
               <div className="space-y-4">
@@ -795,7 +795,7 @@ const ResumeParseForm = ({
                 </Button>
               </div>
             </div>
-          ) : null}
+          )}
         </div>
       </motion.div>
     </div>

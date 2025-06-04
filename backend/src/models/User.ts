@@ -1,6 +1,57 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+export interface ParsedResumeData {
+  name: string;
+  email: string;
+  phone?: string;
+  location?: string;
+  summary?: string;
+  experience: Array<{
+    company: string;
+    position: string;
+    duration: string;
+    description?: string;
+  }>;
+  education: Array<{
+    institution: string;
+    degree: string;
+    field: string;
+    graduationYear: string;
+    startYear?: string;
+  }>;
+  certifications: Array<{
+    name: string;
+    issuer: string;
+    date: string;
+    url?: string;
+  }>;
+  achievements: Array<{
+    title: string;
+    type: 'achievement' | 'competition' | 'hackathon';
+    date: string;
+    description: string;
+    position?: string;
+    organization?: string;
+    url?: string;
+  }>;
+  projects: Array<{
+    name: string;
+    description: string;
+    technologies: string[];
+    duration?: string;
+    url?: string;
+  }>;
+  skills: string[];
+  parsedAt?: Date;
+}
+
+export interface GitHubProfile {
+  username: string;
+  url: string;
+  connectedAt: Date;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -17,6 +68,8 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  githubProfile?: GitHubProfile;
+  parsedResume?: ParsedResumeData;
 }
 
 const userSchema = new Schema<IUser>(
@@ -61,6 +114,15 @@ const userSchema = new Schema<IUser>(
     skills: {
       type: [String],
       default: [],
+    },
+    githubProfile: {
+      username: String,
+      url: String,
+      connectedAt: Date,
+    },
+    parsedResume: {
+      type: Schema.Types.Mixed,
+      default: undefined,
     },
   },
   {

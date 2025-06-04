@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import resumeRoutes from './routes/resume.js';
+import githubRoutes from './routes/github.js';
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/github', githubRoutes);
 app.use('/api/resume', resumeRoutes);
 
 // Error handling middleware

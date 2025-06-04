@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Upload, Clipboard, Plus, Github, Linkedin, CheckCircle, File, Award, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Upload, Clipboard, Plus, Github, Linkedin, CheckCircle, File, Award, AlertCircle, Loader2, Check, LogOut } from 'lucide-react';
 import Button from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
 import ResumeParseForm from '../components/ResumeParseForm';
@@ -24,6 +24,7 @@ const DashboardPage = () => {
   const [showLinkedInModal, setShowLinkedInModal] = useState(false);
   const [loadingGitHub, setLoadingGitHub] = useState(false);
   const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
+  const [githubConnected, setGithubConnected] = useState(false);
   const resumes = [
     {
       id: 1,
@@ -115,11 +116,20 @@ const DashboardPage = () => {
 
   const handleParseConfirm = async (data: ParsedResumeData) => {
     try {
-      // Here you would typically save the parsed data to your backend
-      console.log('Confirmed parsed data:', data);
+      const { error } = await api.saveParsedResume(data);
+      if (error) {
+        throw new Error(error);
+      }
       setShowParseForm(false);
       setParsedData(null);
-      // You might want to show a success message or update the UI
+      // Show success message
+      setUploadSuccessMessage('Resume details saved successfully!');
+      setUploadSuccess(true);
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setUploadSuccessMessage('');
+      }, 5000);
     } catch (error) {
       console.error('Error saving parsed data:', error);
       setParseError('Failed to save resume details. Please try again.');
@@ -134,16 +144,30 @@ const DashboardPage = () => {
     setShowLinkedInModal(true);
   };
 
+  const checkGitHubStatus = async () => {
+    try {
+      const response = await api.getProfile(localStorage.getItem('token') || '');
+      if (response.data?.user?.githubProfile) {
+        setGithubConnected(true);
+      }
+    } catch (error) {
+      console.error('Error checking GitHub status:', error);
+    }
+  };
+
+  useEffect(() => {
+    checkGitHubStatus();
+  }, []);
+
   const handleGitHubSubmit = async (githubUrl: string) => {
     setLoadingGitHub(true);
     try {
-      const { data, error } = await api.connectGitHubProfile(githubUrl);
-      if (error) {
-        throw new Error(error);
+      const response = await api.connectGitHubProfile(githubUrl);
+      if (response.data?.success) {
+        setGithubConnected(true);
       }
-      setShowGitHubModal(false);
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      console.error('Error connecting GitHub:', error);
     } finally {
       setLoadingGitHub(false);
     }
@@ -161,6 +185,21 @@ const DashboardPage = () => {
       throw err;
     } finally {
       setLoadingLinkedIn(false);
+    }
+  };
+
+  const handleGitHubDisconnect = async () => {
+    setLoadingGitHub(true);
+    try {
+      // TODO: Add API endpoint for disconnecting GitHub
+      const response = await api.disconnectGitHubProfile();
+      if (response.data?.success) {
+        setGithubConnected(false);
+      }
+    } catch (error) {
+      console.error('Error disconnecting GitHub:', error);
+    } finally {
+      setLoadingGitHub(false);
     }
   };
 
@@ -204,10 +243,18 @@ const DashboardPage = () => {
                   >
                     {loadingGitHub ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : githubConnected ? (
+                      <>
+                        <Check className="w-5 h-5 text-success-600 dark:text-success-400" />
+                        <span>GitHub Connected</span>
+                        <LogOut className="w-4 h-4 ml-auto text-gray-400 hover:text-gray-600" />
+                      </>
                     ) : (
-                      <Github className="w-5 h-5" />
+                      <>
+                        <Github className="w-5 h-5" />
+                        <span>GitHub Integration</span>
+                      </>
                     )}
-                    <span>GitHub Integration</span>
                   </button>
                   <button
                     onClick={handleLinkedInConnect}
@@ -367,19 +414,32 @@ const DashboardPage = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-800 rounded-xl shadow-md p-6 text-white">
-                <h3 className="text-xl font-semibold mb-2">Connect your GitHub</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  {githubConnected ? 'GitHub Connected' : 'Connect your GitHub'}
+                </h3>
                 <p className="mb-4 text-primary-100">
-                  Link your GitHub profile to automatically extract projects and skills for your resume.
+                  {githubConnected 
+                    ? 'Your GitHub profile is connected. Click to disconnect.'
+                    : 'Link your GitHub profile to automatically extract projects and skills for your resume.'}
                 </p>
                 <Button 
-                  variant="light" 
+                  variant={githubConnected ? "light" : "light"}
                   size="sm"
-                  onClick={handleGitHubConnect}
+                  onClick={githubConnected ? handleGitHubDisconnect : handleGitHubConnect}
                   disabled={loadingGitHub}
                   isLoading={loadingGitHub}
                 >
-                  <Github className="w-4 h-4 mr-2" />
-                  Connect GitHub
+                  {githubConnected ? (
+                    <>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Disconnect GitHub
+                    </>
+                  ) : (
+                    <>
+                      <Github className="w-4 h-4 mr-2" />
+                      Connect GitHub
+                    </>
+                  )}
                 </Button>
               </div>
 
@@ -497,8 +557,31 @@ const DashboardPage = () => {
       {/* GitHub Connect Modal */}
       <GitHubConnectModal
         isOpen={showGitHubModal}
-        onClose={() => setShowGitHubModal(false)}
-        onSubmit={handleGitHubSubmit}
+        onClose={() => {
+          setShowGitHubModal(false);
+          // Reset loading state when modal is closed
+          setLoadingGitHub(false);
+        }}
+        onSubmit={async (githubUrl) => {
+          setLoadingGitHub(true);
+          try {
+            const response = await api.connectGitHubProfile(githubUrl);
+            if (response.error) {
+              throw new Error(response.error);
+            }
+            // Note: We don't set githubConnected here anymore
+            // It will be set by the onSuccess callback
+          } catch (error) {
+            console.error('Error connecting GitHub:', error);
+            throw error;
+          } finally {
+            setLoadingGitHub(false);
+          }
+        }}
+        onSuccess={() => {
+          setGithubConnected(true);
+          setShowGitHubModal(false);
+        }}
       />
 
       <LinkedInConnectModal

@@ -1,4 +1,5 @@
 import { User } from '../contexts/AuthContext';
+import { ParsedResumeData } from './gemini';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
@@ -55,11 +56,44 @@ interface GitHubAuthUrlResponse {
 interface GitHubProfileResponse {
   success: boolean;
   message: string;
+  data?: {
+    username: string;
+    url: string;
+  };
 }
 
 interface LinkedInProfileResponse {
   success: boolean;
   message: string;
+}
+
+interface ProfileResponse {
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    githubProfile?: {
+      username: string;
+      url: string;
+      connectedAt: string;
+    };
+  };
+}
+
+interface GitHubDisconnectResponse {
+  success: boolean;
+  message: string;
+}
+
+interface SaveParsedResumeResponse {
+  success: boolean;
+  message: string;
+  data: {
+    name: string;
+    email: string;
+    skills: string[];
+    parsedAt: string;
+  };
 }
 
 export const api = {
@@ -87,14 +121,14 @@ export const api = {
     return handleResponse<RegisterResponse>(response);
   },
 
-  async getProfile(token: string) {
+  async getProfile(token: string): Promise<ApiResponse<ProfileResponse>> {
     const response = await fetch(`${API_URL}/users/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    return handleResponse(response);
+    return handleResponse<ProfileResponse>(response);
   },
 
   async submitContactForm(formData: ContactFormData) {
@@ -178,6 +212,39 @@ export const api = {
       return handleResponse<LinkedInProfileResponse>(response);
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Failed to connect LinkedIn profile' };
+    }
+  },
+
+  async disconnectGitHubProfile(): Promise<ApiResponse<GitHubDisconnectResponse>> {
+    try {
+      const response = await fetch(`${API_URL}/auth/github/disconnect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      return handleResponse<GitHubDisconnectResponse>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to disconnect GitHub profile' };
+    }
+  },
+
+  saveParsedResume: async (data: ParsedResumeData): Promise<ApiResponse<SaveParsedResumeResponse>> => {
+    try {
+      const response = await fetch(`${API_URL}/resume/save-parsed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      return handleResponse<SaveParsedResumeResponse>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to save resume data' };
     }
   },
 

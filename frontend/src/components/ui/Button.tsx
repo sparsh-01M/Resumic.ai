@@ -2,7 +2,7 @@ import React, { forwardRef, ButtonHTMLAttributes, ElementType, ComponentPropsWit
 import { motion, HTMLMotionProps } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'light' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'light' | 'danger' | 'success';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 type BaseButtonProps = {
@@ -46,6 +46,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps<ElementType>>(
       ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-800 dark:focus:ring-gray-500',
       light: 'bg-white hover:bg-gray-100 text-gray-900 focus:ring-primary-500 border border-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white dark:border-gray-600 dark:focus:ring-primary-500',
       danger: 'bg-error-600 hover:bg-error-700 text-white focus:ring-error-500 dark:bg-error-600 dark:hover:bg-error-700 dark:focus:ring-error-500',
+      success: 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-500',
     };
     
     const disabledClasses = 'opacity-60 cursor-not-allowed';
