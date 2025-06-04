@@ -26,6 +26,8 @@ interface GitHubRepo {
   html_url: string;
   language: string | null;
   topics: string[];
+  fork: boolean;
+  size: number;
 }
 
 export const parseGitHubProfile = async (req: Request, res: Response) => {
@@ -49,7 +51,11 @@ export const parseGitHubProfile = async (req: Request, res: Response) => {
     });
 
     // Filter out forks and empty repos
-    const userRepos = repos.filter(repo => !repo.fork && repo.size > 0);
+    const userRepos = repos.filter((repo): repo is GitHubRepo => 
+      !repo.fork && 
+      typeof repo.size === 'number' && 
+      repo.size > 0
+    );
 
     // Process each repository
     const projects: GitHubProject[] = [];
