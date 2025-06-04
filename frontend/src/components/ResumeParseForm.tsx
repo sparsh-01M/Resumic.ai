@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Button from './ui/Button';
@@ -68,7 +68,11 @@ const ResumeParseForm = ({
 }: ResumeParseFormProps) => {
   const [formData, setFormData] = useState<ParsedResumeData | null>(parsedData);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setFormData(parsedData);
+  }, [parsedData]);
+
+  if (!isOpen || !formData) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -141,8 +145,8 @@ const ResumeParseForm = ({
                     </label>
                     <input
                       type="text"
-                      value={parsedData.name}
-                      onChange={(e) => setFormData({ ...parsedData, name: e.target.value })}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     />
                   </div>
@@ -152,33 +156,33 @@ const ResumeParseForm = ({
                     </label>
                     <input
                       type="email"
-                      value={parsedData.email}
-                      onChange={(e) => setFormData({ ...parsedData, email: e.target.value })}
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                     />
                   </div>
-                  {parsedData.phone && (
+                  {formData.phone && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Phone
                       </label>
                       <input
                         type="tel"
-                        value={parsedData.phone}
-                        onChange={(e) => setFormData({ ...parsedData, phone: e.target.value })}
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       />
                     </div>
                   )}
-                  {parsedData.location && (
+                  {formData.location && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Location
                       </label>
                       <input
                         type="text"
-                        value={parsedData.location}
-                        onChange={(e) => setFormData({ ...parsedData, location: e.target.value })}
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       />
                     </div>
@@ -187,14 +191,14 @@ const ResumeParseForm = ({
               </div>
 
               {/* Summary */}
-              {parsedData.summary && (
+              {formData.summary && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Professional Summary
                   </label>
                   <textarea
-                    value={parsedData.summary}
-                    onChange={(e) => setFormData({ ...parsedData, summary: e.target.value })}
+                    value={formData.summary}
+                    onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   />
@@ -206,7 +210,7 @@ const ResumeParseForm = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Work Experience
                 </h3>
-                {parsedData.experience.map((exp, index) => (
+                {formData.experience.map((exp, index) => (
                   <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -217,9 +221,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={exp.company}
                           onChange={(e) => {
-                            const newExp = [...parsedData.experience];
+                            const newExp = [...formData.experience];
                             newExp[index] = { ...exp, company: e.target.value };
-                            setFormData({ ...parsedData, experience: newExp });
+                            setFormData({ ...formData, experience: newExp });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
@@ -232,9 +236,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={exp.position}
                           onChange={(e) => {
-                            const newExp = [...parsedData.experience];
+                            const newExp = [...formData.experience];
                             newExp[index] = { ...exp, position: e.target.value };
-                            setFormData({ ...parsedData, experience: newExp });
+                            setFormData({ ...formData, experience: newExp });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
@@ -249,7 +253,7 @@ const ResumeParseForm = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Education
                 </h3>
-                {parsedData.education.map((edu, index) => (
+                {formData.education.map((edu, index) => (
                   <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="grid grid-cols-1 gap-4">
                       <div>
@@ -260,9 +264,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={edu.institution}
                           onChange={(e) => {
-                            const newEducation = [...parsedData.education];
+                            const newEducation = [...formData.education];
                             newEducation[index] = { ...edu, institution: e.target.value };
-                            setFormData({ ...parsedData, education: newEducation });
+                            setFormData({ ...formData, education: newEducation });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
@@ -276,9 +280,9 @@ const ResumeParseForm = ({
                             type="text"
                             value={edu.degree}
                             onChange={(e) => {
-                              const newEducation = [...parsedData.education];
+                              const newEducation = [...formData.education];
                               newEducation[index] = { ...edu, degree: e.target.value };
-                              setFormData({ ...parsedData, education: newEducation });
+                              setFormData({ ...formData, education: newEducation });
                             }}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           />
@@ -291,9 +295,9 @@ const ResumeParseForm = ({
                             type="text"
                             value={edu.field}
                             onChange={(e) => {
-                              const newEducation = [...parsedData.education];
+                              const newEducation = [...formData.education];
                               newEducation[index] = { ...edu, field: e.target.value };
-                              setFormData({ ...parsedData, education: newEducation });
+                              setFormData({ ...formData, education: newEducation });
                             }}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           />
@@ -311,12 +315,12 @@ const ResumeParseForm = ({
                               const value = e.target.value;
                               // Only allow 4-digit years
                               if (value === '' || /^\d{4}$/.test(value)) {
-                                const newEducation = [...parsedData.education];
+                                const newEducation = [...formData.education];
                                 newEducation[index] = { 
                                   ...edu, 
                                   startYear: value || undefined 
                                 };
-                                setFormData({ ...parsedData, education: newEducation });
+                                setFormData({ ...formData, education: newEducation });
                               }
                             }}
                             placeholder="e.g., 2021"
@@ -336,9 +340,9 @@ const ResumeParseForm = ({
                               const value = e.target.value;
                               // Only allow 4-digit years
                               if (/^\d{4}$/.test(value)) {
-                                const newEducation = [...parsedData.education];
+                                const newEducation = [...formData.education];
                                 newEducation[index] = { ...edu, graduationYear: value };
-                                setFormData({ ...parsedData, education: newEducation });
+                                setFormData({ ...formData, education: newEducation });
                               }
                             }}
                             placeholder="e.g., 2025"
@@ -355,14 +359,14 @@ const ResumeParseForm = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const newEducation = [...parsedData.education, {
+                    const newEducation = [...formData.education, {
                       institution: '',
                       degree: '',
                       field: '',
                       graduationYear: '',
                       startYear: undefined
                     }];
-                    setFormData({ ...parsedData, education: newEducation });
+                    setFormData({ ...formData, education: newEducation });
                   }}
                   className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
@@ -375,7 +379,7 @@ const ResumeParseForm = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Certifications
                 </h3>
-                {parsedData.certifications.map((cert, index) => (
+                {formData.certifications.map((cert, index) => (
                   <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
@@ -386,9 +390,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={cert.name}
                           onChange={(e) => {
-                            const newCerts = [...parsedData.certifications];
+                            const newCerts = [...formData.certifications];
                             newCerts[index] = { ...cert, name: e.target.value };
-                            setFormData({ ...parsedData, certifications: newCerts });
+                            setFormData({ ...formData, certifications: newCerts });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
@@ -401,9 +405,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={cert.issuer}
                           onChange={(e) => {
-                            const newCerts = [...parsedData.certifications];
+                            const newCerts = [...formData.certifications];
                             newCerts[index] = { ...cert, issuer: e.target.value };
-                            setFormData({ ...parsedData, certifications: newCerts });
+                            setFormData({ ...formData, certifications: newCerts });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
@@ -416,9 +420,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={cert.date}
                           onChange={(e) => {
-                            const newCerts = [...parsedData.certifications];
+                            const newCerts = [...formData.certifications];
                             newCerts[index] = { ...cert, date: e.target.value };
-                            setFormData({ ...parsedData, certifications: newCerts });
+                            setFormData({ ...formData, certifications: newCerts });
                           }}
                           placeholder="e.g., January 2023"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -432,9 +436,9 @@ const ResumeParseForm = ({
                           type="url"
                           value={cert.url || ''}
                           onChange={(e) => {
-                            const newCerts = [...parsedData.certifications];
+                            const newCerts = [...formData.certifications];
                             newCerts[index] = { ...cert, url: e.target.value };
-                            setFormData({ ...parsedData, certifications: newCerts });
+                            setFormData({ ...formData, certifications: newCerts });
                           }}
                           placeholder="e.g., https://certificate-url.com"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -446,13 +450,13 @@ const ResumeParseForm = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const newCerts = [...parsedData.certifications, {
+                    const newCerts = [...formData.certifications, {
                       name: '',
                       issuer: '',
                       date: '',
                       url: ''
                     }];
-                    setFormData({ ...parsedData, certifications: newCerts });
+                    setFormData({ ...formData, certifications: newCerts });
                   }}
                   className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
@@ -465,7 +469,7 @@ const ResumeParseForm = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Achievements & Competitions
                 </h3>
-                {parsedData.achievements.map((achievement, index) => (
+                {formData.achievements.map((achievement, index) => (
                   <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="grid grid-cols-1 gap-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -477,9 +481,9 @@ const ResumeParseForm = ({
                             type="text"
                             value={achievement.title}
                             onChange={(e) => {
-                              const newAchievements = [...parsedData.achievements];
+                              const newAchievements = [...formData.achievements];
                               newAchievements[index] = { ...achievement, title: e.target.value };
-                              setFormData({ ...parsedData, achievements: newAchievements });
+                              setFormData({ ...formData, achievements: newAchievements });
                             }}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           />
@@ -491,12 +495,12 @@ const ResumeParseForm = ({
                           <select
                             value={achievement.type}
                             onChange={(e) => {
-                              const newAchievements = [...parsedData.achievements];
+                              const newAchievements = [...formData.achievements];
                               newAchievements[index] = { 
                                 ...achievement, 
                                 type: e.target.value as 'achievement' | 'competition' | 'hackathon' 
                               };
-                              setFormData({ ...parsedData, achievements: newAchievements });
+                              setFormData({ ...formData, achievements: newAchievements });
                             }}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                           >
@@ -515,9 +519,9 @@ const ResumeParseForm = ({
                             type="text"
                             value={achievement.date}
                             onChange={(e) => {
-                              const newAchievements = [...parsedData.achievements];
+                              const newAchievements = [...formData.achievements];
                               newAchievements[index] = { ...achievement, date: e.target.value };
-                              setFormData({ ...parsedData, achievements: newAchievements });
+                              setFormData({ ...formData, achievements: newAchievements });
                             }}
                             placeholder="e.g., January 2023"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -531,9 +535,9 @@ const ResumeParseForm = ({
                             type="text"
                             value={achievement.position || ''}
                             onChange={(e) => {
-                              const newAchievements = [...parsedData.achievements];
+                              const newAchievements = [...formData.achievements];
                               newAchievements[index] = { ...achievement, position: e.target.value };
-                              setFormData({ ...parsedData, achievements: newAchievements });
+                              setFormData({ ...formData, achievements: newAchievements });
                             }}
                             placeholder="e.g., 1st Place, Runner Up"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -548,9 +552,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={achievement.organization || ''}
                           onChange={(e) => {
-                            const newAchievements = [...parsedData.achievements];
+                            const newAchievements = [...formData.achievements];
                             newAchievements[index] = { ...achievement, organization: e.target.value };
-                            setFormData({ ...parsedData, achievements: newAchievements });
+                            setFormData({ ...formData, achievements: newAchievements });
                           }}
                           placeholder="e.g., Google, Microsoft, University Name"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -563,9 +567,9 @@ const ResumeParseForm = ({
                         <textarea
                           value={achievement.description}
                           onChange={(e) => {
-                            const newAchievements = [...parsedData.achievements];
+                            const newAchievements = [...formData.achievements];
                             newAchievements[index] = { ...achievement, description: e.target.value };
-                            setFormData({ ...parsedData, achievements: newAchievements });
+                            setFormData({ ...formData, achievements: newAchievements });
                           }}
                           rows={3}
                           placeholder="Describe the achievement, competition, or hackathon"
@@ -580,9 +584,9 @@ const ResumeParseForm = ({
                           type="url"
                           value={achievement.url || ''}
                           onChange={(e) => {
-                            const newAchievements = [...parsedData.achievements];
+                            const newAchievements = [...formData.achievements];
                             newAchievements[index] = { ...achievement, url: e.target.value };
-                            setFormData({ ...parsedData, achievements: newAchievements });
+                            setFormData({ ...formData, achievements: newAchievements });
                           }}
                           placeholder="e.g., https://competition-website.com/results"
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -594,7 +598,7 @@ const ResumeParseForm = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const newAchievements = [...parsedData.achievements, {
+                    const newAchievements = [...formData.achievements, {
                       title: '',
                       type: 'achievement' as const,
                       date: '',
@@ -603,7 +607,7 @@ const ResumeParseForm = ({
                       organization: '',
                       url: ''
                     }];
-                    setFormData({ ...parsedData, achievements: newAchievements });
+                    setFormData({ ...formData, achievements: newAchievements });
                   }}
                   className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
@@ -616,7 +620,7 @@ const ResumeParseForm = ({
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Projects
                 </h3>
-                {parsedData.projects.map((project, index) => (
+                {formData.projects.map((project, index) => (
                   <div key={index} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="grid grid-cols-1 gap-4">
                       <div>
@@ -627,9 +631,9 @@ const ResumeParseForm = ({
                           type="text"
                           value={project.name}
                           onChange={(e) => {
-                            const newProjects = [...parsedData.projects];
+                            const newProjects = [...formData.projects];
                             newProjects[index] = { ...project, name: e.target.value };
-                            setFormData({ ...parsedData, projects: newProjects });
+                            setFormData({ ...formData, projects: newProjects });
                           }}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
                         />
@@ -641,9 +645,9 @@ const ResumeParseForm = ({
                         <textarea
                           value={project.description}
                           onChange={(e) => {
-                            const newProjects = [...parsedData.projects];
+                            const newProjects = [...formData.projects];
                             newProjects[index] = { ...project, description: e.target.value };
-                            setFormData({ ...parsedData, projects: newProjects });
+                            setFormData({ ...formData, projects: newProjects });
                           }}
                           rows={3}
                           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -658,9 +662,9 @@ const ResumeParseForm = ({
                             type="text"
                             value={project.duration || ''}
                             onChange={(e) => {
-                              const newProjects = [...parsedData.projects];
+                              const newProjects = [...formData.projects];
                               newProjects[index] = { ...project, duration: e.target.value };
-                              setFormData({ ...parsedData, projects: newProjects });
+                              setFormData({ ...formData, projects: newProjects });
                             }}
                             placeholder="e.g., 2022-2023"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -674,9 +678,9 @@ const ResumeParseForm = ({
                             type="url"
                             value={project.url || ''}
                             onChange={(e) => {
-                              const newProjects = [...parsedData.projects];
+                              const newProjects = [...formData.projects];
                               newProjects[index] = { ...project, url: e.target.value };
-                              setFormData({ ...parsedData, projects: newProjects });
+                              setFormData({ ...formData, projects: newProjects });
                             }}
                             placeholder="e.g., https://github.com/username/project"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent dark:bg-gray-700 dark:text-white"
@@ -697,21 +701,21 @@ const ResumeParseForm = ({
                                 type="text"
                                 value={tech}
                                 onChange={(e) => {
-                                  const newProjects = [...parsedData.projects];
+                                  const newProjects = [...formData.projects];
                                   const newTechs = [...project.technologies];
                                   newTechs[techIndex] = e.target.value;
                                   newProjects[index] = { ...project, technologies: newTechs };
-                                  setFormData({ ...parsedData, projects: newProjects });
+                                  setFormData({ ...formData, projects: newProjects });
                                 }}
                                 className="bg-transparent border-none focus:ring-0 p-0 w-24"
                               />
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const newProjects = [...parsedData.projects];
+                                  const newProjects = [...formData.projects];
                                   const newTechs = project.technologies.filter((_, i) => i !== techIndex);
                                   newProjects[index] = { ...project, technologies: newTechs };
-                                  setFormData({ ...parsedData, projects: newProjects });
+                                  setFormData({ ...formData, projects: newProjects });
                                 }}
                                 className="ml-2 text-primary-500 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                               >
@@ -722,10 +726,10 @@ const ResumeParseForm = ({
                           <button
                             type="button"
                             onClick={() => {
-                              const newProjects = [...parsedData.projects];
+                              const newProjects = [...formData.projects];
                               const newTechs = [...project.technologies, ''];
                               newProjects[index] = { ...project, technologies: newTechs };
-                              setFormData({ ...parsedData, projects: newProjects });
+                              setFormData({ ...formData, projects: newProjects });
                             }}
                             className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600"
                           >
@@ -739,14 +743,14 @@ const ResumeParseForm = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const newProjects = [...parsedData.projects, {
+                    const newProjects = [...formData.projects, {
                       name: '',
                       description: '',
                       technologies: [],
                       duration: '',
                       url: ''
                     }];
-                    setFormData({ ...parsedData, projects: newProjects });
+                    setFormData({ ...formData, projects: newProjects });
                   }}
                   className="w-full px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
@@ -760,7 +764,7 @@ const ResumeParseForm = ({
                   Skills
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {parsedData.skills.map((skill, index) => (
+                  {formData.skills.map((skill, index) => (
                     <div
                       key={index}
                       className="px-3 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm"
@@ -783,7 +787,7 @@ const ResumeParseForm = ({
                 </Button>
                 <Button
                   variant="primary"
-                  onClick={() => onConfirm(formData || parsedData)}
+                  onClick={() => onConfirm(formData)}
                   className="flex items-center"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />

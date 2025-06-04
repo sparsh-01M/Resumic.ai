@@ -1,8 +1,13 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User';
-import { uploadToCloudinary } from '../services/cloudinary';
+import { User, IUser } from '../models/User.js';
+import { uploadToCloudinary } from '../services/cloudinary.js';
 
-export const uploadResume = async (req: Request, res: Response) => {
+interface RequestWithFile extends Request {
+  file?: Express.Multer.File;
+  user?: IUser;
+}
+
+export const uploadResume = async (req: RequestWithFile, res: Response) => {
   try {
     console.log('Starting resume upload...');
     console.log('Request file:', req.file);
@@ -34,14 +39,14 @@ export const uploadResume = async (req: Request, res: Response) => {
 
     // Update user in database
     console.log('Updating user in database...');
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
+    const user = (await User.findByIdAndUpdate(
+      req.user?._id,
       {
         resumeUrl,
         resumeUploadedAt: new Date(),
       },
       { new: true }
-    ).select('-password');
+    ).select('-password')) as IUser & { _id: string };
 
     if (!user) {
       console.log('User not found after update');

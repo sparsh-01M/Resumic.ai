@@ -1,6 +1,6 @@
 import express from 'express';
-import { uploadResume } from '../controllers/resume';
-import { upload } from '../services/cloudinary';
+import { uploadResume } from '../controllers/resume.js';
+import { upload } from '../services/cloudinary.js';
 import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
