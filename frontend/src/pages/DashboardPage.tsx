@@ -9,6 +9,29 @@ import LinkedInConnectModal from '../components/LinkedInConnectModal';
 import { api } from '../services/api';
 import { parseResumeWithGemini, ParsedResumeData } from '../services/gemini';
 
+// Add these interfaces at the top of the file, after imports
+interface GitHubProfile {
+  username: string;
+  url: string;
+  connectedAt: string;
+}
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  githubProfile?: GitHubProfile;
+  githubConnected: boolean;
+  linkedInProfile?: string;
+  linkedInConnected: boolean;
+}
+
+interface ProfileResponse {
+  data: {
+    user: UserProfile;
+  };
+}
+
 const DashboardPage = () => {
   const { user } = useAuth();
   const [uploadingResume, setUploadingResume] = useState(false);
@@ -176,23 +199,27 @@ const DashboardPage = () => {
 
   const checkGitHubStatus = async () => {
     try {
-      const response = await api.getProfile(localStorage.getItem('token') || '');
-      if (response.data?.user?.githubProfile) {
-        setGithubConnected(true);
-      }
+      const response = await api.getProfile(localStorage.getItem('token') || '') as ProfileResponse;
+      // Check both githubConnected flag and githubProfile existence
+      const isConnected = Boolean(response.data?.user?.githubConnected && 
+                                response.data?.user?.githubProfile?.url);
+      setGithubConnected(isConnected);
     } catch (error) {
       console.error('Error checking GitHub status:', error);
+      setGithubConnected(false);
     }
   };
 
   const checkLinkedInStatus = async () => {
     try {
-      const response = await api.getProfile(localStorage.getItem('token') || '');
-      if (response.data?.user?.linkedInProfile) {
-        setLinkedInConnected(true);
-      }
+      const response = await api.getProfile(localStorage.getItem('token') || '') as ProfileResponse;
+      // Check both linkedInConnected flag and linkedInProfile existence
+      const isConnected = Boolean(response.data?.user?.linkedInConnected && 
+                                response.data?.user?.linkedInProfile);
+      setLinkedInConnected(isConnected);
     } catch (error) {
       console.error('Error checking LinkedIn status:', error);
+      setLinkedInConnected(false);
     }
   };
 
