@@ -240,15 +240,79 @@ export const disconnectLinkedInProfile = async (req: Request, res: Response) => 
 };
 
 export const connectLinkedInProfile = async (req: Request, res: Response) => {
-  // ... existing code ...
-
   try {
-    // ... existing code ...
+    const userId = req.user?.id;
+    const { profileUrl } = req.body;
 
-    // Analyze LinkedIn data with Gemini
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    if (!profileUrl) {
+      return res.status(400).json({
+        success: false,
+        message: 'LinkedIn profile URL is required'
+      });
+    }
+
+    if (!GEMINI_API_KEY) {
+      console.error('Gemini API key is missing');
+      return res.status(500).json({ 
+        success: false,
+        error: 'AI service is not configured properly' 
+      });
+    }
+
+    // Initialize Gemini model
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    // First get the LinkedIn profile data
+    const prompt = `Analyze this LinkedIn profile URL and extract the following information in JSON format. Return ONLY the raw JSON object without any markdown formatting or code blocks:
+    {
+      "name": "Full name",
+      "headline": "Current job title/headline",
+      "summary": "Profile summary/about section",
+      "experience": [
+        {
+          "title": "Job title",
+          "company": "Company name",
+          "duration": "Duration of employment",
+          "description": "Job description/responsibilities"
+        }
+      ],
+      "education": [
+        {
+          "school": "School name",
+          "degree": "Degree name",
+          "field": "Field of study",
+          "duration": "Duration of education"
+        }
+      ],
+      "skills": ["List of skills"],
+      "languages": ["List of languages"]
+    }
+    
+    LinkedIn Profile URL: ${profileUrl}
+    
+    Note: Extract only the information that is publicly visible. If any section is not available, leave it as an empty array or null.
+    Important: Return ONLY the raw JSON object, no markdown formatting, no code blocks, no additional text.`;
+
+    // Get initial profile data
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const responseText = response.text();
+    
+    // Clean and parse the response
+    const cleanJson = responseText.replace(/```json\n?|\n?```/g, '').trim();
+    const linkedinData = JSON.parse(cleanJson);
+
+    // Now analyze the LinkedIn data for insights
     let analysis;
     try {
-      const prompt = `Analyze this LinkedIn profile data and provide insights in JSON format with the following structure:
+      const analysisPrompt = `Analyze this LinkedIn profile data and provide insights in JSON format with the following structure:
       {
         "summary": "A brief professional summary",
         "keySkills": ["skill1", "skill2", ...],
@@ -260,9 +324,9 @@ export const connectLinkedInProfile = async (req: Request, res: Response) => {
       LinkedIn Data:
       ${JSON.stringify(linkedinData, null, 2)}`;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      analysis = JSON.parse(response.text());
+      const analysisResult = await model.generateContent(analysisPrompt);
+      const analysisResponse = await analysisResult.response;
+      analysis = JSON.parse(analysisResponse.text());
     } catch (geminiError: unknown) {
       const error = geminiError as GeminiError;
       console.error('Gemini API Error:', {
@@ -274,8 +338,66 @@ export const connectLinkedInProfile = async (req: Request, res: Response) => {
       throw new Error('Failed to analyze LinkedIn data');
     }
 
-    // ... rest of the code ...
+    // Update both models with the data
+    const session = await User.startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Update User model
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          {
+            $set: {
+              linkedInProfile: profileUrl,
+              linkedInData: { ...linkedinData, analysis },
+              linkedInConnected: true,
+              linkedInLastUpdated: new Date()
+            }
+          },
+          { new: true, session }
+        );
+
+        // Update or create LinkedInData model
+        await LinkedInData.findOneAndUpdate(
+          { userId },
+          {
+            $set: {
+              profileUrl,
+              data: { ...linkedinData, analysis },
+              lastUpdated: new Date()
+            }
+          },
+          { 
+            upsert: true, 
+            new: true,
+            session
+          }
+        );
+
+        console.log('\n✅ Successfully saved LinkedIn data to both models');
+        console.log('Updated user document:', {
+          id: updatedUser?._id,
+          name: updatedUser?.name,
+          email: updatedUser?.email,
+          linkedInProfile: updatedUser?.linkedInProfile,
+          linkedInConnected: updatedUser?.linkedInConnected,
+          linkedInLastUpdated: updatedUser?.linkedInLastUpdated
+        });
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    res.json({
+      success: true,
+      data: { ...linkedinData, analysis }
+    });
+
   } catch (error) {
-    // ... error handling ...
+    console.error('Error connecting LinkedIn profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to connect LinkedIn profile',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }; 
