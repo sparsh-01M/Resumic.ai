@@ -12,6 +12,14 @@ if (!GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
+// Add this interface for Gemini API errors
+interface GeminiError {
+  message?: string;
+  status?: number;
+  details?: string;
+  code?: number;
+}
+
 export const parseLinkedInProfile = async (req: Request, res: Response) => {
   try {
     const { profileUrl } = req.body;
@@ -149,16 +157,17 @@ export const parseLinkedInProfile = async (req: Request, res: Response) => {
         data: parsedData
       });
 
-    } catch (geminiError) {
-      console.error('Gemini API Error Details:', {
-        name: geminiError.name,
-        message: geminiError.message,
-        stack: geminiError.stack,
-        cause: geminiError.cause
+    } catch (geminiError: unknown) {
+      const error = geminiError as GeminiError;
+      console.error('Gemini API Error:', {
+        message: error.message || 'Unknown error',
+        status: error.status,
+        details: error.details,
+        code: error.code
       });
       return res.status(500).json({
         error: 'Failed to analyze LinkedIn profile',
-        details: geminiError instanceof Error ? geminiError.message : 'Unknown Gemini API error'
+        details: error instanceof Error ? error.message : 'Unknown Gemini API error'
       });
     }
 
@@ -227,5 +236,46 @@ export const disconnectLinkedInProfile = async (req: Request, res: Response) => 
       success: false,
       message: 'Failed to disconnect LinkedIn profile'
     });
+  }
+};
+
+export const connectLinkedInProfile = async (req: Request, res: Response) => {
+  // ... existing code ...
+
+  try {
+    // ... existing code ...
+
+    // Analyze LinkedIn data with Gemini
+    let analysis;
+    try {
+      const prompt = `Analyze this LinkedIn profile data and provide insights in JSON format with the following structure:
+      {
+        "summary": "A brief professional summary",
+        "keySkills": ["skill1", "skill2", ...],
+        "experienceHighlights": ["highlight1", "highlight2", ...],
+        "education": ["education1", "education2", ...],
+        "recommendations": ["recommendation1", "recommendation2", ...]
+      }
+      
+      LinkedIn Data:
+      ${JSON.stringify(linkedinData, null, 2)}`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      analysis = JSON.parse(response.text());
+    } catch (geminiError: unknown) {
+      const error = geminiError as GeminiError;
+      console.error('Gemini API Error:', {
+        message: error.message || 'Unknown error',
+        status: error.status,
+        details: error.details,
+        code: error.code
+      });
+      throw new Error('Failed to analyze LinkedIn data');
+    }
+
+    // ... rest of the code ...
+  } catch (error) {
+    // ... error handling ...
   }
 }; 
