@@ -24,8 +24,8 @@ const LinkedInConnectModal = ({ isOpen, onClose, onSubmit }: LinkedInConnectModa
       return;
     }
 
-    // Clean the URL by removing trailing slash if present
-    const cleanUrl = linkedinUrl.trim().replace(/\/$/, '');
+    // Clean the URL by removing trailing slash and any @ symbol
+    const cleanUrl = linkedinUrl.trim().replace(/\/$/, '').replace(/^@/, '');
 
     // Validate LinkedIn URL format - now handles URLs with or without trailing slash
     const linkedinUrlPattern = /^https?:\/\/(www\.)?linkedin\.com\/in\/[\w-]+(?:\/)?$/;
@@ -36,7 +36,7 @@ const LinkedInConnectModal = ({ isOpen, onClose, onSubmit }: LinkedInConnectModa
 
     setLoading(true);
     try {
-      // Submit the cleaned URL (without trailing slash)
+      // Pass the cleaned URL to the submit handler
       await onSubmit(cleanUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect LinkedIn profile');
