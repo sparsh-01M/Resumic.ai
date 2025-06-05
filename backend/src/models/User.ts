@@ -52,6 +52,39 @@ export interface GitHubProfile {
   connectedAt: Date;
 }
 
+export interface LinkedInData {
+  name: string;
+  headline: string;
+  summary: string;
+  experience: Array<{
+    title: string;
+    company: string;
+    duration: string;
+    description: string;
+  }>;
+  education: Array<{
+    school: string;
+    degree: string;
+    field: string;
+    duration: string;
+  }>;
+  skills: string[];
+  languages: string[];
+}
+
+export interface GitHubProject {
+  name: string;
+  description: string;
+  url: string;
+  technologies: string[];
+  atsPoints: string[];
+  developmentDuration?: string;
+  stars: number;
+  language: string;
+  analysis: string;
+  lastUpdated: Date;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -69,7 +102,14 @@ export interface IUser extends Document {
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
   githubProfile?: GitHubProfile;
+  githubProjects?: GitHubProject[];
+  githubConnected: boolean;
+  githubLastUpdated?: Date;
   parsedResume?: ParsedResumeData;
+  linkedInProfile?: string;
+  linkedInData?: LinkedInData;
+  linkedInConnected: boolean;
+  linkedInLastUpdated?: Date;
 }
 
 const userSchema = new Schema<IUser>(
@@ -120,10 +160,57 @@ const userSchema = new Schema<IUser>(
       url: String,
       connectedAt: Date,
     },
+    githubProjects: [{
+      name: {
+        type: String,
+        required: true
+      },
+      description: {
+        type: String,
+        required: true
+      },
+      url: {
+        type: String,
+        required: true
+      },
+      technologies: [{
+        type: String,
+        required: true
+      }],
+      atsPoints: [{
+        type: String,
+        required: true
+      }],
+      developmentDuration: {
+        type: String
+      },
+      stars: {
+        type: Number,
+        required: true
+      },
+      language: {
+        type: String,
+        required: true
+      },
+      analysis: {
+        type: String,
+        required: true
+      },
+      lastUpdated: {
+        type: Date,
+        required: true
+      }
+    }],
+    githubConnected: { type: Boolean, default: false },
+    githubLastUpdated: { type: Date },
     parsedResume: {
       type: Schema.Types.Mixed,
       default: undefined,
     },
+    linkedInProfile: { type: String },
+    linkedInData: { type: Schema.Types.Mixed },
+    linkedInConnected: { type: Boolean, default: false },
+    linkedInLastUpdated: { type: Date }
   },
   {
     timestamps: true,

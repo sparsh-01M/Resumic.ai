@@ -181,52 +181,65 @@ export const connectGitHubProfile = async (req: Request, res: Response) => {
       repos.data.map(repo => analyzeProject(repo, username))
     );
 
-    // Update user's GitHub profile in database
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
+    // Start a MongoDB session for transaction
+    const session = await User.startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Update User model with GitHub profile and projects
+        const user = await User.findByIdAndUpdate(
+          userId,
+          {
+            $set: {
+              githubProfile: {
+                username,
+                url: githubUrl,
+                connectedAt: new Date(),
+              },
+              githubProjects: analyzedProjects,
+              githubConnected: true,
+              githubLastUpdated: new Date()
+            }
+          },
+          { new: true, session }
+        );
+
+        if (!user) {
+          throw new Error('User not found');
+        }
+
+        // Store analyzed projects in GitHubProject model
+        const savedProjects = await GitHubProject.findOneAndUpdate(
+          { userId, username },
+          {
+            userId,
+            username,
+            projects: analyzedProjects,
+            lastAnalyzed: new Date()
+          },
+          { upsert: true, new: true, session }
+        );
+
+        console.log('\n=== GitHub Projects Saved to Both Models ===');
+        console.log(`User ID: ${userId}`);
+        console.log(`Username: ${username}`);
+        console.log(`Last Analyzed: ${savedProjects.lastAnalyzed.toLocaleString()}`);
+        console.log('\nProjects Summary:');
+        savedProjects.projects.forEach((project, index) => {
+          console.log(`\n${index + 1}. ${project.name}`);
+          console.log(`   URL: ${project.url}`);
+          console.log(`   Technologies: ${project.technologies.join(', ')}`);
+          console.log(`   Stars: ${project.stars}`);
+          console.log(`   Language: ${project.language}`);
+          console.log(`   Duration: ${project.developmentDuration}`);
+          console.log('   ATS Points:');
+          project.atsPoints.forEach(point => console.log(`   • ${point}`));
+          console.log('   ----------');
+        });
+        console.log('\n✅ Successfully saved GitHub projects data to both models');
       });
+    } finally {
+      await session.endSession();
     }
-
-    user.githubProfile = {
-      username,
-      url: githubUrl,
-      connectedAt: new Date(),
-    };
-
-    await user.save();
-
-    // Store analyzed projects
-    const savedProjects = await GitHubProject.findOneAndUpdate(
-      { userId, username },
-      {
-        userId,
-        username,
-        projects: analyzedProjects,
-        lastAnalyzed: new Date()
-      },
-      { upsert: true, new: true }
-    );
-
-    console.log('\n=== GitHub Projects Saved to MongoDB ===');
-    console.log(`User ID: ${userId}`);
-    console.log(`Username: ${username}`);
-    console.log(`Last Analyzed: ${savedProjects.lastAnalyzed.toLocaleString()}`);
-    console.log('\nProjects Summary:');
-    savedProjects.projects.forEach((project, index) => {
-      console.log(`\n${index + 1}. ${project.name}`);
-      console.log(`   URL: ${project.url}`);
-      console.log(`   Technologies: ${project.technologies.join(', ')}`);
-      console.log(`   Stars: ${project.stars}`);
-      console.log(`   Language: ${project.language}`);
-      console.log(`   Duration: ${project.developmentDuration}`);
-      console.log('   ATS Points:');
-      project.atsPoints.forEach(point => console.log(`   • ${point}`));
-      console.log('   ----------');
-    });
-    console.log('\n✅ Successfully saved GitHub projects data to MongoDB');
 
     res.json({
       success: true,
@@ -257,18 +270,40 @@ export const disconnectGitHubProfile = async (req: Request, res: Response) => {
       });
     }
 
-    // Update user's GitHub profile in database
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    const session = await User.startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Update User model
+        const user = await User.findByIdAndUpdate(
+          userId,
+          {
+            $set: {
+              githubProfile: undefined,
+              githubProjects: undefined,
+              githubConnected: false,
+              githubLastUpdated: undefined
+            }
+          },
+          { new: true, session }
+        );
 
-    // Remove GitHub profile
-    user.githubProfile = undefined;
-    await user.save();
+        if (!user) {
+          throw new Error('User not found');
+        }
+
+        // Delete GitHubProject document
+        await GitHubProject.findOneAndDelete(
+          { userId },
+          { session }
+        );
+
+        console.log('\n=== GitHub Profile Disconnected ===');
+        console.log(`User ID: ${userId}`);
+        console.log('✅ Successfully removed GitHub data from both models');
+      });
+    } finally {
+      await session.endSession();
+    }
 
     res.json({
       success: true,

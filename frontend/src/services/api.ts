@@ -77,6 +77,10 @@ interface ProfileResponse {
       url: string;
       connectedAt: string;
     };
+    linkedInProfile?: {
+      url: string;
+      connectedAt: string;
+    };
   };
 }
 
@@ -245,6 +249,46 @@ export const api = {
       return handleResponse<SaveParsedResumeResponse>(response);
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Failed to save resume data' };
+    }
+  },
+
+  async parseLinkedInProfile(profileUrl: string) {
+    try {
+      const response = await fetch(`${API_URL}/linkedin/parse-profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ profileUrl })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to parse LinkedIn profile');
+      }
+
+      const data = await response.json();
+      return { data };
+    } catch (error) {
+      console.error('Error parsing LinkedIn profile:', error);
+      throw error;
+    }
+  },
+
+  async disconnectLinkedInProfile(): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    try {
+      const response = await fetch(`${API_URL}/linkedin/disconnect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      return handleResponse<{ success: boolean; message: string }>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to disconnect LinkedIn profile' };
     }
   },
 

@@ -3,6 +3,7 @@ import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import resumeRoutes from './routes/resume.js';
 import githubRoutes from './routes/github.js';
+import linkedinRoutes from './routes/linkedin.js';
 
 const app = express();
 
@@ -10,11 +11,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+ 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/auth/github', githubRoutes);
 app.use('/api/resume', resumeRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/linkedin', linkedinRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -25,6 +25,9 @@ const DashboardPage = () => {
   const [loadingGitHub, setLoadingGitHub] = useState(false);
   const [loadingLinkedIn, setLoadingLinkedIn] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
+  const [linkedInError, setLinkedInError] = useState<string | null>(null);
+  const [linkedInConnected, setLinkedInConnected] = useState(false);
+  const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   const resumes = [
     {
       id: 1,
@@ -140,8 +143,35 @@ const DashboardPage = () => {
     setShowGitHubModal(true);
   };
 
-  const handleLinkedInConnect = () => {
-    setShowLinkedInModal(true);
+  const handleLinkedInConnect = async (profileUrl: string) => {
+    try {
+      setLoadingLinkedIn(true);
+      setLinkedInError(null);
+
+      const { data } = await api.parseLinkedInProfile(profileUrl);
+      
+      // Update connection state
+      setLinkedInConnected(true);
+      
+      // Show success message
+      setUploadSuccessMessage('LinkedIn profile connected successfully!');
+      setUploadSuccess(true);
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setUploadSuccessMessage('');
+      }, 5000);
+
+      // Close the modal
+      setIsLinkedInModalOpen(false);
+
+    } catch (error) {
+      console.error('Error connecting LinkedIn:', error);
+      setLinkedInError(error instanceof Error ? error.message : 'Failed to connect LinkedIn profile');
+    } finally {
+      setLoadingLinkedIn(false);
+    }
   };
 
   const checkGitHubStatus = async () => {
@@ -155,8 +185,20 @@ const DashboardPage = () => {
     }
   };
 
+  const checkLinkedInStatus = async () => {
+    try {
+      const response = await api.getProfile(localStorage.getItem('token') || '');
+      if (response.data?.user?.linkedInProfile) {
+        setLinkedInConnected(true);
+      }
+    } catch (error) {
+      console.error('Error checking LinkedIn status:', error);
+    }
+  };
+
   useEffect(() => {
     checkGitHubStatus();
+    checkLinkedInStatus();
   }, []);
 
   const handleGitHubSubmit = async (githubUrl: string) => {
@@ -173,21 +215,6 @@ const DashboardPage = () => {
     }
   };
 
-  const handleLinkedInSubmit = async (linkedinUrl: string) => {
-    setLoadingLinkedIn(true);
-    try {
-      const { data, error } = await api.connectLinkedInProfile(linkedinUrl);
-      if (error) {
-        throw new Error(error);
-      }
-      setShowLinkedInModal(false);
-    } catch (err) {
-      throw err;
-    } finally {
-      setLoadingLinkedIn(false);
-    }
-  };
-
   const handleGitHubDisconnect = async () => {
     setLoadingGitHub(true);
     try {
@@ -200,6 +227,27 @@ const DashboardPage = () => {
       console.error('Error disconnecting GitHub:', error);
     } finally {
       setLoadingGitHub(false);
+    }
+  };
+
+  const handleLinkedInDisconnect = async () => {
+    setLoadingLinkedIn(true);
+    try {
+      const response = await api.disconnectLinkedInProfile();
+      if (response.data?.success) {
+        setLinkedInConnected(false);
+        setUploadSuccessMessage('LinkedIn profile disconnected successfully!');
+        setUploadSuccess(true);
+        setTimeout(() => {
+          setUploadSuccess(false);
+          setUploadSuccessMessage('');
+        }, 5000);
+      }
+    } catch (error) {
+      console.error('Error disconnecting LinkedIn:', error);
+      setLinkedInError(error instanceof Error ? error.message : 'Failed to disconnect LinkedIn profile');
+    } finally {
+      setLoadingLinkedIn(false);
     }
   };
 
@@ -251,22 +299,30 @@ const DashboardPage = () => {
                       </>
                     ) : (
                       <>
-                        <Github className="w-5 h-5" />
-                        <span>GitHub Integration</span>
+                    <Github className="w-5 h-5" />
+                    <span>GitHub Integration</span>
                       </>
                     )}
                   </button>
                   <button
-                    onClick={handleLinkedInConnect}
+                    onClick={() => linkedInConnected ? handleLinkedInDisconnect() : setIsLinkedInModalOpen(true)}
                     disabled={loadingLinkedIn}
                     className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingLinkedIn ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : linkedInConnected ? (
+                      <>
+                        <Check className="w-5 h-5 text-success-600 dark:text-success-400" />
+                        <span>LinkedIn Connected</span>
+                        <LogOut className="w-4 h-4 ml-auto text-gray-400 hover:text-gray-600" />
+                      </>
                     ) : (
-                      <Linkedin className="w-5 h-5" />
+                      <>
+                        <Linkedin className="w-5 h-5" />
+                        <span>LinkedIn Integration</span>
+                      </>
                     )}
-                    <span>LinkedIn Integration</span>
                   </button>
                   <a
                     href="#"
@@ -436,27 +492,40 @@ const DashboardPage = () => {
                     </>
                   ) : (
                     <>
-                      <Github className="w-4 h-4 mr-2" />
-                      Connect GitHub
+                  <Github className="w-4 h-4 mr-2" />
+                  Connect GitHub
                     </>
                   )}
                 </Button>
               </div>
 
               <div className="bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-800 rounded-xl shadow-md p-6 text-white">
-                <h3 className="text-xl font-semibold mb-2">Connect your LinkedIn</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                  {linkedInConnected ? 'LinkedIn Connected' : 'Connect your LinkedIn'}
+                </h3>
                 <p className="mb-4 text-primary-100">
-                  Link your LinkedIn profile to automatically extract details for your resume.
+                  {linkedInConnected 
+                    ? 'Your LinkedIn profile is connected. Click to disconnect.'
+                    : 'Link your LinkedIn profile to automatically extract details for your resume.'}
                 </p>
-                <Button 
-                  variant="light" 
+                <Button
+                  variant="light"
                   size="sm"
-                  onClick={handleLinkedInConnect}
+                  onClick={() => linkedInConnected ? handleLinkedInDisconnect() : setIsLinkedInModalOpen(true)}
                   disabled={loadingLinkedIn}
                   isLoading={loadingLinkedIn}
                 >
-                  <Linkedin className="w-4 h-4 mr-2" />
-                  Connect LinkedIn
+                  {linkedInConnected ? (
+                    <>
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Disconnect LinkedIn
+                    </>
+                  ) : (
+                    <>
+                      <Linkedin className="w-4 h-4 mr-2" />
+                      Connect LinkedIn
+                    </>
+                  )}
                 </Button>
               </div>
             </motion.div>
@@ -585,9 +654,9 @@ const DashboardPage = () => {
       />
 
       <LinkedInConnectModal
-        isOpen={showLinkedInModal}
-        onClose={() => setShowLinkedInModal(false)}
-        onSubmit={handleLinkedInSubmit}
+        isOpen={isLinkedInModalOpen}
+        onClose={() => setIsLinkedInModalOpen(false)}
+        onSubmit={handleLinkedInConnect}
       />
     </div>
   );
