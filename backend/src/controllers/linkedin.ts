@@ -12,6 +12,13 @@ if (!GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
+// Add this interface near the top of the file
+interface GeminiError extends Error {
+  status?: number;
+  code?: string;
+  details?: string;
+}
+
 export const parseLinkedInProfile = async (req: Request, res: Response) => {
   try {
     const { profileUrl } = req.body;
@@ -149,16 +156,41 @@ export const parseLinkedInProfile = async (req: Request, res: Response) => {
         data: parsedData
       });
 
-    } catch (geminiError) {
-      console.error('Gemini API Error Details:', {
-        name: geminiError.name,
-        message: geminiError.message,
-        stack: geminiError.stack,
-        cause: geminiError.cause
-      });
+    } catch (error) {
+      console.error('Error analyzing LinkedIn profile:', error);
+      const geminiError = error as GeminiError;
+      
+      if (geminiError.message?.includes('API key')) {
+        return res.status(500).json({
+          success: false,
+          message: 'LinkedIn analysis service is not properly configured'
+        });
+      }
+      
+      if (geminiError.status === 429) {
+        return res.status(429).json({
+          success: false,
+          message: 'LinkedIn analysis service is currently rate limited. Please try again later.'
+        });
+      }
+      
+      if (geminiError.code === 'ENOTFOUND') {
+        return res.status(503).json({
+          success: false,
+          message: 'LinkedIn analysis service is currently unavailable'
+        });
+      }
+      
+      if (geminiError.details) {
+        return res.status(400).json({
+          success: false,
+          message: `LinkedIn analysis failed: ${geminiError.details}`
+        });
+      }
+
       return res.status(500).json({
-        error: 'Failed to analyze LinkedIn profile',
-        details: geminiError instanceof Error ? geminiError.message : 'Unknown Gemini API error'
+        success: false,
+        message: 'Failed to analyze LinkedIn profile'
       });
     }
 
