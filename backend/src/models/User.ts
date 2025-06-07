@@ -204,8 +204,48 @@ const userSchema = new Schema<IUser>(
     githubConnected: { type: Boolean, default: false },
     githubLastUpdated: { type: Date },
     parsedResume: {
-      type: Schema.Types.Mixed,
-      default: undefined,
+      name: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String },
+      location: { type: String },
+      summary: { type: String },
+      experience: [{
+        company: { type: String, required: true },
+        position: { type: String, required: true },
+        duration: { type: String, required: true },
+        description: { type: String }
+      }],
+      education: [{
+        institution: { type: String, required: true },
+        degree: { type: String, required: true },
+        field: { type: String },
+        graduationYear: { type: String, required: true },
+        startYear: { type: String }
+      }],
+      certifications: [{
+        name: { type: String, required: true },
+        issuer: { type: String, required: true },
+        date: { type: String },
+        url: { type: String }
+      }],
+      achievements: [{
+        title: { type: String, required: true },
+        type: { type: String, enum: ['achievement', 'competition', 'hackathon'], required: true },
+        date: { type: String },
+        description: { type: String, required: true },
+        position: { type: String },
+        organization: { type: String },
+        url: { type: String }
+      }],
+      projects: [{
+        name: { type: String, required: true },
+        description: { type: String, required: true },
+        technologies: [{ type: String }],
+        duration: { type: String },
+        url: { type: String }
+      }],
+      skills: [{ type: String }],
+      parsedAt: { type: Date, default: Date.now }
     },
     linkedInProfile: { type: String },
     linkedInData: { type: Schema.Types.Mixed },

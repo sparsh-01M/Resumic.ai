@@ -13,93 +13,91 @@ const MAX_RETRIES = 2;
 const MAX_OUTPUT_TOKENS = 4096;
 
 // Helper function to validate and format JSON
-const validateAndFormatJSON = (jsonStr: string): string => {
-  // Log the raw input for debugging
-  console.log('Validating JSON string:', {
-    length: jsonStr.length,
-    isEmpty: jsonStr.trim().length === 0,
-    firstChars: jsonStr.substring(0, 50),
-    lastChars: jsonStr.substring(jsonStr.length - 50)
-  });
-
-  if (!jsonStr || jsonStr.trim().length === 0) {
-    throw new Error('Empty response from Gemini API');
-  }
-
-  // First, try to find the JSON object boundaries
-  const firstBrace = jsonStr.indexOf('{');
-  const lastBrace = jsonStr.lastIndexOf('}');
+const validateAndFormatJSON = (text: string): string => {
+  console.log('Validating JSON string:', text);
   
-  if (firstBrace === -1) {
-    throw new Error('Invalid JSON response: Could not find opening brace');
+  // First, try to find the JSON object in the text
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('No JSON object found in the response');
   }
   
-  if (lastBrace === -1) {
-    // If we can't find the closing brace, the response might be truncated
-    console.warn('JSON response appears to be truncated. Attempting to fix...');
+  let jsonStr = jsonMatch[0];
+  
+  // Ensure all arrays are properly closed
+  const arrayStack: string[] = [];
+  let inString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
     
-    // Count opening and closing braces to see if we can fix it
-    const openBraces = (jsonStr.match(/{/g) || []).length;
-    const closeBraces = (jsonStr.match(/}/g) || []).length;
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
     
-    if (openBraces > closeBraces) {
-      // Add missing closing braces
-      const missingBraces = openBraces - closeBraces;
-      jsonStr = jsonStr + '}'.repeat(missingBraces);
-      console.log('Added missing closing braces:', missingBraces);
-    } else {
-      throw new Error('Invalid JSON response: Could not find closing brace and unable to fix');
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"' && !escapeNext) {
+      inString = !inString;
+      continue;
+    }
+    
+    if (!inString) {
+      if (char === '[') {
+        arrayStack.push('[');
+      } else if (char === ']') {
+        if (arrayStack.length > 0) {
+          arrayStack.pop();
+        }
+      }
     }
   }
   
-  // Extract just the JSON object
-  let extracted = jsonStr.slice(firstBrace, lastBrace + 1);
+  // Close any unclosed arrays
+  while (arrayStack.length > 0) {
+    jsonStr += ']';
+    arrayStack.pop();
+  }
   
-  // Remove any markdown code block indicators
-  extracted = extracted.replace(/```json\n?|\n?```/g, '');
+  // Ensure the object is properly closed
+  if (!jsonStr.endsWith('}')) {
+    jsonStr += '}';
+  }
   
-  // Remove any leading/trailing whitespace
-  extracted = extracted.trim();
-  
-  // Remove any trailing commas in arrays and objects
-  extracted = extracted.replace(/,(\s*[}\]])/g, '$1');
-  
-  // Log the JSON structure for debugging
-  console.log('JSON Structure Analysis:', {
-    totalLength: extracted.length,
-    first100Chars: extracted.substring(0, 100),
-    last100Chars: extracted.substring(extracted.length - 100),
-    hasMarkdown: extracted.includes('```'),
-    hasNewlines: extracted.includes('\n'),
-    braceCount: {
-      open: (extracted.match(/{/g) || []).length,
-      close: (extracted.match(/}/g) || []).length
+  // Validate the JSON structure
+  try {
+    const parsed = JSON.parse(jsonStr);
+    
+    // Ensure all required fields are present
+    if (!parsed.name || !parsed.email) {
+      throw new Error('Missing required fields: name and email');
     }
-  });
-  
-  // Find all arrays in the JSON
-  const arrayMatches = extracted.match(/\[[^\]]*\]/g);
-  if (arrayMatches) {
-    console.log('Found arrays:', arrayMatches.map(arr => ({
-      length: arr.length,
-      content: arr.substring(0, 50) + (arr.length > 50 ? '...' : '')
-    })));
+    
+    // Ensure all arrays are properly initialized
+    parsed.experience = parsed.experience || [];
+    parsed.education = parsed.education || [];
+    parsed.skills = parsed.skills || [];
+    parsed.projects = parsed.projects || [];
+    parsed.certifications = parsed.certifications || [];
+    parsed.achievements = parsed.achievements || [];
+    
+    // Clean up any null values in arrays
+    Object.keys(parsed).forEach(key => {
+      if (Array.isArray(parsed[key])) {
+        parsed[key] = parsed[key].filter(item => item !== null);
+      }
+    });
+    
+    return JSON.stringify(parsed);
+  } catch (error) {
+    console.error('JSON validation error:', error);
+    throw new Error(`Invalid JSON structure: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  
-  // Check for common JSON formatting issues
-  const issues = [];
-  if (extracted.includes('undefined')) issues.push('Contains "undefined"');
-  if (extracted.includes('NaN')) issues.push('Contains "NaN"');
-  if (extracted.includes('Infinity')) issues.push('Contains "Infinity"');
-  if (extracted.match(/,\s*[}\]](?!\s*[,}])/)) issues.push('Has trailing commas');
-  if (extracted.match(/\[\s*,/)) issues.push('Has empty array elements');
-  if (extracted.match(/{\s*,/)) issues.push('Has empty object elements');
-  
-  if (issues.length > 0) {
-    console.log('Potential JSON issues:', issues);
-  }
-  
-  return extracted;
 };
 
 export interface ParsedResumeData {

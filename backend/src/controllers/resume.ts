@@ -80,7 +80,7 @@ export const uploadResume = async (req: RequestWithFile, res: Response) => {
 
 export const saveParsedResume = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user?._id;
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -93,27 +93,71 @@ export const saveParsedResume = async (req: Request, res: Response) => {
     console.log('Data summary:', {
       name: parsedData.name,
       email: parsedData.email,
-      experienceCount: parsedData.experience.length,
-      educationCount: parsedData.education.length,
-      projectsCount: parsedData.projects.length,
-      skillsCount: parsedData.skills.length
+      experienceCount: parsedData.experience?.length || 0,
+      educationCount: parsedData.education?.length || 0,
+      projectsCount: parsedData.projects?.length || 0,
+      skillsCount: parsedData.skills?.length || 0
     });
 
-    // Update user with parsed resume data
+    // Clean up the data before saving
+    const cleanedData = {
+      name: parsedData.name,
+      email: parsedData.email,
+      phone: parsedData.phone || undefined,
+      location: parsedData.location || undefined,
+      summary: parsedData.summary || undefined,
+      experience: parsedData.experience?.map(exp => ({
+        company: exp.company,
+        position: exp.position,
+        duration: exp.duration,
+        description: exp.description || undefined
+      })) || [],
+      education: parsedData.education?.map(edu => ({
+        institution: edu.institution,
+        degree: edu.degree,
+        field: edu.field || undefined,
+        graduationYear: edu.graduationYear,
+        startYear: edu.startYear || undefined
+      })) || [],
+      certifications: parsedData.certifications?.map(cert => ({
+        name: cert.name,
+        issuer: cert.issuer,
+        date: cert.date || undefined,
+        url: cert.url || undefined
+      })) || [],
+      achievements: parsedData.achievements?.map(achievement => ({
+        title: achievement.title,
+        type: achievement.type,
+        date: achievement.date || undefined,
+        description: achievement.description,
+        position: achievement.position || undefined,
+        organization: achievement.organization || undefined,
+        url: achievement.url || undefined
+      })) || [],
+      projects: parsedData.projects?.map(project => ({
+        name: project.name,
+        description: project.description,
+        technologies: project.technologies || [],
+        duration: project.duration || undefined,
+        url: project.url || undefined
+      })) || [],
+      skills: parsedData.skills || []
+    };
+
+    // Update user with parsed resume data, but don't update email
     const user = await User.findByIdAndUpdate(
       userId,
       {
         $set: {
-          name: parsedData.name,
-          email: parsedData.email,
-          skills: parsedData.skills,
+          name: cleanedData.name,
+          skills: cleanedData.skills,
           parsedResume: {
-            ...parsedData,
+            ...cleanedData,
             parsedAt: new Date()
           }
         }
       },
-      { new: true }
+      { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) {

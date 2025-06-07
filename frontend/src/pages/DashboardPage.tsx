@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 import ResumeParseForm from '../components/ResumeParseForm';
 import GitHubConnectModal from '../components/GitHubConnectModal';
 import LinkedInConnectModal from '../components/LinkedInConnectModal';
+import TemplateSelectionModal from '../components/TemplateSelectionModal';
+import { LaTeXTemplate } from '../templates/latex/templates';
 import { api } from '../services/api';
 import { parseResumeWithGemini, ParsedResumeData } from '../services/gemini';
 
@@ -51,6 +53,7 @@ const DashboardPage = () => {
   const [linkedInError, setLinkedInError] = useState<string | null>(null);
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const resumes = [
     {
       id: 1,
@@ -278,6 +281,12 @@ const DashboardPage = () => {
     }
   };
 
+  const handleTemplateSelect = (template: LaTeXTemplate) => {
+    // TODO: Implement template selection logic
+    console.log('Selected template:', template);
+    // You can add your logic here to handle the selected template
+  };
+
   return (
     <div className="pt-20 pb-12">
       <div className="container mx-auto px-4 md:px-6">
@@ -358,13 +367,13 @@ const DashboardPage = () => {
                     <Award className="w-5 h-5" />
                     <span>ATS Score History</span>
                   </a>
-                  <a
-                    href="#"
+                  <button
+                    onClick={() => setShowTemplateModal(true)}
                     className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Clipboard className="w-5 h-5" />
                     <span>Templates</span>
-                  </a>
+                  </button>
                 </nav>
               </div>
 
@@ -684,6 +693,12 @@ const DashboardPage = () => {
         isOpen={isLinkedInModalOpen}
         onClose={() => setIsLinkedInModalOpen(false)}
         onSubmit={handleLinkedInConnect}
+      />
+
+      <TemplateSelectionModal
+        isOpen={showTemplateModal}
+        onClose={() => setShowTemplateModal(false)}
+        onSelect={handleTemplateSelect}
       />
     </div>
   );
