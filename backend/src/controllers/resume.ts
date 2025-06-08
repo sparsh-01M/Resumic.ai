@@ -1,10 +1,42 @@
 import { Request, Response } from 'express';
 import { User, IUser, ParsedResumeData } from '../models/User.js';
 import { uploadToCloudinary } from '../services/cloudinary.js';
+import { TemplateResumeData } from '../types/resume.js';
 
 interface RequestWithFile extends Request {
   file?: Express.Multer.File;
   user?: IUser;
+}
+
+interface Education {
+  startDate?: string;
+  endDate?: string;
+  institution?: string;
+  degree?: string;
+  gpa?: string;
+  coursework?: string[];
+}
+
+interface Experience {
+  startDate?: string;
+  endDate?: string;
+  title?: string;
+  company?: string;
+  location?: string;
+  highlights?: string[];
+}
+
+interface Project {
+  name?: string;
+  link?: string;
+  date?: string;
+  description?: string[];
+  technologies?: string;
+}
+
+interface Skill {
+  category?: string;
+  items?: string;
 }
 
 export const uploadResume = async (req: RequestWithFile, res: Response) => {
@@ -200,6 +232,129 @@ export const saveParsedResume = async (req: Request, res: Response) => {
       success: false,
       message: 'Failed to save resume data',
       error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
+export const saveTemplate = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+
+    const { template, ...resumeData } = req.body;
+
+    // Validate template data
+    if (!template?.id || !template?.name || !template?.filePath) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid template data'
+      });
+    }
+
+    // Clean and validate education data
+    const cleanedEducation = resumeData.education?.map((edu: Education) => ({
+      startDate: edu.startDate || 'Present',
+      endDate: edu.endDate || 'Present',
+      institution: edu.institution || '',
+      degree: edu.degree || '',
+      gpa: edu.gpa,
+      coursework: edu.coursework
+    })) || [];
+
+    // Clean and validate experience data
+    const cleanedExperience = resumeData.experience?.map((exp: Experience) => ({
+      startDate: exp.startDate || 'Present',
+      endDate: exp.endDate || 'Present',
+      title: exp.title || '',
+      company: exp.company || '',
+      location: exp.location || '',
+      highlights: exp.highlights || []
+    })) || [];
+
+    // Clean and validate projects data
+    const cleanedProjects = resumeData.projects?.map((proj: Project) => ({
+      name: proj.name || '',
+      link: proj.link,
+      date: proj.date,
+      description: proj.description || [],
+      technologies: proj.technologies
+    })) || [];
+
+    // Clean and validate skills data
+    const cleanedSkills = resumeData.skills?.map((skill: Skill) => ({
+      category: skill.category || 'Other',
+      items: skill.items || ''
+    })) || [];
+
+    // Create cleaned resume data
+    const cleanedResumeData: TemplateResumeData = {
+      name: resumeData.name || '',
+      email: resumeData.email || '',
+      phone: resumeData.phone || '',
+      location: resumeData.location || '',
+      website: resumeData.website || '',
+      linkedin: resumeData.linkedin || '',
+      github: resumeData.github || '',
+      education: cleanedEducation,
+      experience: cleanedExperience,
+      projects: cleanedProjects,
+      skills: cleanedSkills,
+      updatedAt: new Date()
+    };
+
+    // Update user with template selection and transformed data
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          selectedTemplate: {
+            id: template.id,
+            name: template.name,
+            filePath: template.filePath,
+            selectedAt: new Date()
+          },
+          transformedResume: cleanedResumeData
+        }
+      },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    console.log('✅ Successfully saved template selection and transformed data');
+    console.log('Updated user document:', {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      templateId: user.selectedTemplate?.id,
+      templateName: user.selectedTemplate?.name,
+      updatedAt: user.transformedResume?.updatedAt
+    });
+
+    res.json({
+      success: true,
+      message: 'Template selection saved successfully',
+      data: {
+        templateId: user.selectedTemplate?.id,
+        name: user.selectedTemplate?.name,
+        filePath: user.selectedTemplate?.filePath
+      }
+    });
+  } catch (error) {
+    console.error('Error saving template selection:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save template selection'
     });
   }
 }; 

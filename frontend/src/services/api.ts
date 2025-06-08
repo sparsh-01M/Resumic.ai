@@ -100,6 +100,16 @@ interface SaveParsedResumeResponse {
   };
 }
 
+interface SaveTemplateResponse {
+  success: boolean;
+  message: string;
+  data: {
+    templateId: string;
+    name: string;
+    filePath: string;
+  };
+}
+
 export const api = {
   async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -289,6 +299,23 @@ export const api = {
       return handleResponse<{ success: boolean; message: string }>(response);
     } catch (error) {
       return { error: error instanceof Error ? error.message : 'Failed to disconnect LinkedIn profile' };
+    }
+  },
+
+  async saveTemplate(templateData: any): Promise<ApiResponse<SaveTemplateResponse>> {
+    try {
+      const response = await fetch(`${API_URL}/resume/template`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(templateData),
+      });
+
+      return handleResponse<SaveTemplateResponse>(response);
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : 'Failed to save template' };
     }
   },
 

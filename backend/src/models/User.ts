@@ -110,6 +110,49 @@ export interface IUser extends Document {
   linkedInData?: LinkedInData;
   linkedInConnected: boolean;
   linkedInLastUpdated?: Date;
+  selectedTemplate?: {
+    id: string;
+    name: string;
+    filePath: string;
+    selectedAt: Date;
+  };
+  transformedResume?: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    website: string;
+    linkedin: string;
+    github: string;
+    education: Array<{
+      startDate: string;
+      endDate: string;
+      institution: string;
+      degree: string;
+      gpa?: string;
+      coursework?: string;
+    }>;
+    experience: Array<{
+      startDate: string;
+      endDate: string;
+      title: string;
+      company: string;
+      location: string;
+      highlights: string[];
+    }>;
+    projects: Array<{
+      name: string;
+      link?: string;
+      date?: string;
+      description: string[];
+      technologies?: string;
+    }>;
+    skills: Array<{
+      category: string;
+      items: string;
+    }>;
+    updatedAt: Date;
+  };
 }
 
 const userSchema = new Schema<IUser>(
@@ -250,7 +293,50 @@ const userSchema = new Schema<IUser>(
     linkedInProfile: { type: String },
     linkedInData: { type: Schema.Types.Mixed },
     linkedInConnected: { type: Boolean, default: false },
-    linkedInLastUpdated: { type: Date }
+    linkedInLastUpdated: { type: Date },
+    selectedTemplate: {
+      id: { type: String, required: true },
+      name: { type: String, required: true },
+      filePath: { type: String, required: true },
+      selectedAt: { type: Date, default: Date.now }
+    },
+    transformedResume: {
+      name: { type: String },
+      email: { type: String },
+      phone: { type: String },
+      location: { type: String },
+      website: { type: String },
+      linkedin: { type: String },
+      github: { type: String },
+      education: [{
+        startDate: { type: String },
+        endDate: { type: String },
+        institution: { type: String },
+        degree: { type: String },
+        gpa: { type: String },
+        coursework: { type: String }
+      }],
+      experience: [{
+        startDate: { type: String },
+        endDate: { type: String },
+        title: { type: String },
+        company: { type: String },
+        location: { type: String },
+        highlights: [{ type: String }]
+      }],
+      projects: [{
+        name: { type: String },
+        link: { type: String },
+        date: { type: String },
+        description: [{ type: String }],
+        technologies: { type: String }
+      }],
+      skills: [{
+        category: { type: String },
+        items: { type: String }
+      }],
+      updatedAt: { type: Date, default: Date.now }
+    }
   },
   {
     timestamps: true,

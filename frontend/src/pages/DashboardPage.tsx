@@ -10,6 +10,7 @@ import TemplateSelectionModal from '../components/TemplateSelectionModal';
 import { LaTeXTemplate } from '../templates/latex/templates';
 import { api } from '../services/api';
 import { parseResumeWithGemini, ParsedResumeData } from '../services/gemini';
+import { normalizeMongoData } from '../utils/resumeDataTransformer';
 
 // Add these interfaces at the top of the file, after imports
 interface GitHubProfile {
@@ -281,10 +282,55 @@ const DashboardPage = () => {
     }
   };
 
-  const handleTemplateSelect = (template: LaTeXTemplate) => {
-    // TODO: Implement template selection logic
-    console.log('Selected template:', template);
-    // You can add your logic here to handle the selected template
+  const handleTemplateSelect = async (template: LaTeXTemplate) => {
+    try {
+      // Fetch user data from MongoDB
+      const response = await api.getProfile(localStorage.getItem('token') || '');
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      const userData = response.data?.user;
+
+      if (!userData) {
+        throw new Error('Failed to fetch user data');
+      }
+
+      // Transform the data using our existing function
+      const transformedData = normalizeMongoData(userData);
+
+      // Add template information to the transformed data
+      const templateData = {
+        ...transformedData,
+        template: {
+          id: template.id,
+          name: template.name,
+          filePath: template.filePath
+        }
+      };
+
+      // Save the template selection and transformed data
+      const saveResponse = await api.saveTemplate(templateData);
+      if (saveResponse.error) {
+        throw new Error(saveResponse.error);
+      }
+
+      // Show success message
+      setUploadSuccessMessage('Template applied successfully!');
+      setUploadSuccess(true);
+      setTimeout(() => {
+        setUploadSuccess(false);
+        setUploadSuccessMessage('');
+      }, 5000);
+
+      // Close the template modal
+      setShowTemplateModal(false);
+    } catch (error) {
+      console.error('Error applying template:', error);
+      setUploadError('Failed to apply template. Please try again.');
+      setTimeout(() => {
+        setUploadError('');
+      }, 5000);
+    }
   };
 
   return (
