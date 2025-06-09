@@ -576,6 +576,21 @@ const DashboardPage = () => {
                 <Button
                   variant="outline"
                   fullWidth
+                  onClick={() => {
+                    const bothConnected = githubConnected && linkedInConnected;
+                    console.log('Both GitHub and LinkedIn connected:', bothConnected);
+                    
+                    if (bothConnected) {
+                      setShowTemplateModal(true);
+                    } else {
+                      const missingServices = [];
+                      if (!githubConnected) missingServices.push('GitHub');
+                      if (!linkedInConnected) missingServices.push('LinkedIn');
+                      
+                      const message = `Please connect your ${missingServices.join(' and ')} profile${missingServices.length > 1 ? 's' : ''} first to create a new resume.`;
+                      toast.error(message);
+                    }
+                  }}
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create New

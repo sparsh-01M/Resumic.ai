@@ -175,8 +175,7 @@ const TemplateSelectionModal = ({ isOpen, onClose, onSelect, userData }: Templat
 
   const handleConfirm = () => {
     if (selectedTemplate) {
-      onSelect(selectedTemplate);
-      onClose();
+      setShowPreview(true);
     }
   };
 
@@ -304,7 +303,7 @@ const TemplateSelectionModal = ({ isOpen, onClose, onSelect, userData }: Templat
                   onClick={handleConfirm}
                   disabled={!selectedTemplate}
                 >
-                  Use Template
+                  Preview Template
                 </Button>
               </div>
             </div>
