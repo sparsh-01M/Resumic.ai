@@ -9,6 +9,51 @@ export interface User {
     plan: 'free' | 'pro' | 'teams';
     status: 'active' | 'inactive';
   };
+  githubProfile?: {
+    username: string;
+    url: string;
+    connectedAt: string;
+  };
+  githubConnected: boolean;
+  linkedInProfile?: string;
+  linkedInLastUpdated?: string;
+  transformedResume?: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    website: string;
+    linkedin: string;
+    github: string;
+    education: Array<{
+      institution: string;
+      degree: string;
+      startDate: string;
+      endDate: string;
+      gpa?: string;
+      coursework?: string;
+    }>;
+    experience: Array<{
+      title: string;
+      company: string;
+      location: string;
+      startDate: string;
+      endDate: string;
+      highlights: string[];
+    }>;
+    projects: Array<{
+      name: string;
+      date?: string;
+      link?: string;
+      description: string[];
+      technologies?: string;
+    }>;
+    skills: Array<{
+      category: string;
+      items: string;
+    }>;
+    updatedAt: Date;
+  };
 }
 
 interface AuthContextType {

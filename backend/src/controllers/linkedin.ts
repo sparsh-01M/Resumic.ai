@@ -21,14 +21,17 @@ interface GeminiError extends Error {
 
 export const parseLinkedInProfile = async (req: Request, res: Response) => {
   try {
-    const { profileUrl } = req.body;
+    const { profileUrl, linkedinUrl } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    if (!profileUrl) {
+    // Handle both parameter names for compatibility
+    const url = linkedinUrl || profileUrl;
+
+    if (!url) {
       return res.status(400).json({ error: 'LinkedIn profile URL is required' });
     }
 
@@ -39,7 +42,7 @@ export const parseLinkedInProfile = async (req: Request, res: Response) => {
 
     console.log('\n=== LinkedIn Profile Parsing Started ===');
     console.log(`User ID: ${userId}`);
-    console.log(`Profile URL: ${profileUrl}`);
+    console.log(`Profile URL: ${url}`);
     console.log('Using Gemini API Key:', GEMINI_API_KEY.substring(0, 5) + '...');
 
     try {
@@ -71,7 +74,7 @@ export const parseLinkedInProfile = async (req: Request, res: Response) => {
         "languages": ["List of languages"]
       }
       
-      LinkedIn Profile URL: ${profileUrl}
+      LinkedIn Profile URL: ${url}
       
       Note: Extract only the information that is publicly visible. If any section is not available, leave it as an empty array or null.
       Important: Return ONLY the raw JSON object, no markdown formatting, no code blocks, no additional text.`;
@@ -111,7 +114,7 @@ export const parseLinkedInProfile = async (req: Request, res: Response) => {
             userId,
             {
               $set: {
-                linkedInProfile: profileUrl,
+                linkedInProfile: url,
                 linkedInData: parsedData,
                 linkedInConnected: true,
                 linkedInLastUpdated: new Date()
@@ -125,7 +128,7 @@ export const parseLinkedInProfile = async (req: Request, res: Response) => {
             { userId },
             {
               $set: {
-                profileUrl,
+                profileUrl: url,
                 data: parsedData,
                 lastUpdated: new Date()
               }

@@ -7,9 +7,10 @@ interface LinkedInConnectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (linkedinUrl: string) => Promise<void>;
+  onSuccess?: () => void;
 }
 
-const LinkedInConnectModal = ({ isOpen, onClose, onSubmit }: LinkedInConnectModalProps) => {
+const LinkedInConnectModal = ({ isOpen, onClose, onSubmit, onSuccess }: LinkedInConnectModalProps) => {
   const [linkedinUrl, setLinkedinUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,6 +39,8 @@ const LinkedInConnectModal = ({ isOpen, onClose, onSubmit }: LinkedInConnectModa
     try {
       // Pass the cleaned URL to the submit handler
       await onSubmit(cleanUrl);
+      // Call onSuccess if provided
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect LinkedIn profile');
     } finally {

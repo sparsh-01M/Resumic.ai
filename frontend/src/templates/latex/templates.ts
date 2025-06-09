@@ -13,7 +13,7 @@ export const latexTemplates: LaTeXTemplate[] = [
     name: 'Modern Professional',
     description: 'A clean and modern template with a professional layout, perfect for tech professionals.',
     previewImage: '/templates/previews/template1.png',
-    filePath: '/templates/latex/template1.tex',
+    filePath: '/src/templates/latex/template1.tex',
     features: [
       'Two-column layout',
       'Skills section with progress bars',
@@ -26,7 +26,7 @@ export const latexTemplates: LaTeXTemplate[] = [
     name: 'Creative Portfolio',
     description: 'A creative template with a unique design, ideal for designers and creative professionals.',
     previewImage: '/templates/previews/template2.png',
-    filePath: '/templates/latex/template2.tex',
+    filePath: '/src/templates/latex/template2.tex',
     features: [
       'Creative header design',
       'Portfolio section',
@@ -39,7 +39,7 @@ export const latexTemplates: LaTeXTemplate[] = [
     name: 'Academic CV',
     description: 'A comprehensive template designed for academic professionals and researchers.',
     previewImage: '/templates/previews/template3.png',
-    filePath: '/templates/latex/template3.tex',
+    filePath: '/src/templates/latex/template3.tex',
     features: [
       'Publication list',
       'Research experience',
@@ -52,7 +52,7 @@ export const latexTemplates: LaTeXTemplate[] = [
     name: 'Executive Resume',
     description: 'An elegant template for senior executives and management professionals.',
     previewImage: '/templates/previews/template4.png',
-    filePath: '/templates/latex/template4.tex',
+    filePath: '/src/templates/latex/template4.tex',
     features: [
       'Executive summary',
       'Leadership experience',
@@ -65,7 +65,7 @@ export const latexTemplates: LaTeXTemplate[] = [
     name: 'Minimalist Modern',
     description: 'A minimalist template with a modern touch, perfect for any professional.',
     previewImage: '/templates/previews/template5.png',
-    filePath: '/templates/latex/template5.tex',
+    filePath: '/src/templates/latex/template5.tex',
     features: [
       'Clean typography',
       'Minimalist design',

@@ -150,7 +150,6 @@
 
 % new command for external links:
 
-
 \begin{document}
     \newcommand{\AND}{\unskip
         \cleaders\copy\ANDbox\hskip\wd\ANDbox
@@ -231,23 +230,22 @@
 
     \section{Projects}
     ${#each projects}
-        \begin{twocolentry}{
-            ${#if link}\href{${link}}{${link}}${else}${date}${/if}
-        }
-            \textbf{${name}}
-        \end{twocolentry}
-
-        \vspace{0.10 cm}
-        \begin{onecolentry}
-            \begin{highlights}
-                ${#each description}
-                \item ${this}
-                ${/each}
-                ${#if technologies}
-                \item Tools Used: ${technologies}
-                ${/if}
-            \end{highlights}
-        \end{onecolentry}
+    \begin{twocolentry}{
+    ${date}
+}
+    \textbf{${name}}
+\end{twocolentry}
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+    ${#each description}
+    \item ${this}
+    ${/each}
+    ${#if technologies}
+    \item Tools Used: ${technologies}
+    ${/if}
+    \end{highlights}
+\end{onecolentry}
     ${/each}
 
     \section{Technologies}

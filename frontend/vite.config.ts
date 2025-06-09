@@ -1,9 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'tex-loader',
+      transform(code, id) {
+        if (id.endsWith('.tex')) {
+          return {
+            code: `export default ${JSON.stringify(code)}`,
+            map: null
+          };
+        }
+      }
+    }
+  ],
   server: {
     proxy: {
       '/api': {
@@ -39,5 +53,10 @@ export default defineConfig({
   // Use esbuild for faster builds
   esbuild: {
     target: 'esnext'
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src')
+    }
   }
 });

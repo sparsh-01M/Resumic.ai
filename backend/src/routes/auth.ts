@@ -1,6 +1,8 @@
 import express from 'express';
 import { body } from 'express-validator';
 import { register, login } from '../controllers/auth.js';
+import { parseLinkedInProfile } from '../controllers/linkedin.js';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -21,5 +23,8 @@ const loginValidation = [
 // Routes
 router.post('/register', registerValidation, register);
 router.post('/login', loginValidation, login);
+
+// LinkedIn routes
+router.post('/linkedin/connect', auth, parseLinkedInProfile);
 
 export default router; 

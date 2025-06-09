@@ -10,7 +10,7 @@
     footskip=1.0 cm, % seperation between body and footer
     % showframe % for debugging 
 ]{geometry} % for adjusting page geometry
-\usepackage{titlesec} % for customizing section titles
+\usepackage[explicit]{titlesec} % for customizing section titles
 \usepackage{tabularx} % for making tables with fixed width columns
 \usepackage{array} % tabularx requires this
 \usepackage[dvipsnames]{xcolor} % for coloring text
@@ -39,12 +39,12 @@
 \ifPDFTeX
     \input{glyphtounicode}
     \pdfgentounicode=1
-    % \usepackage[T1]{fontenc} % this breaks sb2nov
+    \usepackage[T1]{fontenc}
     \usepackage[utf8]{inputenc}
     \usepackage{lmodern}
 \fi
 
-
+\usepackage[default, type1]{sourcesanspro} 
 
 % Some settings:
 \AtBeginEnvironment{adjustwidth}{\partopsep0pt} % remove space before adjustwidth environment
@@ -52,7 +52,7 @@
 \setcounter{secnumdepth}{0} % no section numbering
 \setlength{\parindent}{0pt} % no indentation
 \setlength{\topskip}{0pt} % no top skip
-\setlength{\columnsep}{0cm} % set column seperation
+\setlength{\columnsep}{0.15cm} % set column seperation
 \makeatletter
 \let\ps@customFooterStyle\ps@plain % Copy the plain style to customFooterStyle
 \patchcmd{\ps@customFooterStyle}{\thepage}{
@@ -61,7 +61,18 @@
 \makeatother
 \pagestyle{customFooterStyle}
 
-\titleformat{\section}{\needspace{4\baselineskip}\bfseries\large}{}{0pt}{}[\vspace{1pt}\titlerule]
+\titleformat{\section}{
+    % avoid page braking right after the section title
+    \needspace{4\baselineskip}
+    % make the font size of the section title large and color it with the primary color
+    \Large\color{primaryColor}
+}{
+}{
+}{
+    % print bold title, give 0.15 cm space and draw a line of 0.8 pt thickness
+    % from the end of the title to the end of the body
+    \textbf{#1}\hspace{0.15cm}\titlerule[0.8pt]\hspace{-0.1cm}
+}[] % section title formatting
 
 \titlespacing{\section}{
     % left space:
@@ -74,7 +85,7 @@
     0.2 cm
 } % section title spacing
 
-\renewcommand\labelitemi{$\circ$} % custom bullet points
+% \renewcommand\labelitemi{$\vcenter{\hbox{\small$\bullet$}}$} % custom bullet points
 \newenvironment{highlights}{
     \begin{itemize}[
         topsep=0.10 cm,
@@ -121,8 +132,20 @@
     \endonecolentry
 } % new environment for two column entries
 
+\newenvironment{threecolentry}[3][]{
+    \onecolentry
+    \def\thirdColumn{#3}
+    \setcolumnwidth{1 cm, \fill, 4.5 cm}
+    \begin{paracol}{3}
+    {\raggedright #2} \switchcolumn
+}{
+    \switchcolumn \raggedleft \thirdColumn
+    \end{paracol}
+    \endonecolentry
+} % new environment for three column entries
+
 \newenvironment{header}{
-    \setlength{\topsep}{0pt}\par\kern\topsep\centering\linespread{1.5}
+    \setlength{\topsep}{0pt}\par\kern\topsep\centering\color{primaryColor}\linespread{1.5}
 }{
     \par\kern\topsep
 } % new environment for the header
@@ -155,32 +178,33 @@
 
     \placelastupdatedtext
     \begin{header}
-        \textbf{\fontsize{24 pt}{24 pt}\selectfont John Doe}
+        \fontsize{30 pt}{30 pt}
+        \textbf{John Doe}
 
         \vspace{0.3 cm}
 
         \normalsize
-        \mbox{{\color{black}\footnotesize\faMapMarker*}\hspace*{0.13cm}Your Location}%
+        \mbox{{\footnotesize\faMapMarker*}\hspace*{0.13cm}Your Location}%
         \kern 0.25 cm%
         \AND%
         \kern 0.25 cm%
-        \mbox{\hrefWithoutArrow{mailto:youremail@yourdomain.com}{\color{black}{\footnotesize\faEnvelope[regular]}\hspace*{0.13cm}youremail@yourdomain.com}}%
+        \mbox{\hrefWithoutArrow{mailto:youremail@yourdomain.com}{{\footnotesize\faEnvelope[regular]}\hspace*{0.13cm}youremail@yourdomain.com}}%
         \kern 0.25 cm%
         \AND%
         \kern 0.25 cm%
-        \mbox{\hrefWithoutArrow{tel:+90-541-999-99-99}{\color{black}{\footnotesize\faPhone*}\hspace*{0.13cm}0541 999 99 99}}%
+        \mbox{\hrefWithoutArrow{tel:+90-541-999-99-99}{{\footnotesize\faPhone*}\hspace*{0.13cm}0541 999 99 99}}%
         \kern 0.25 cm%
         \AND%
         \kern 0.25 cm%
-        \mbox{\hrefWithoutArrow{https://yourwebsite.com/}{\color{black}{\footnotesize\faLink}\hspace*{0.13cm}yourwebsite.com}}%
+        \mbox{\hrefWithoutArrow{https://yourwebsite.com/}{{\footnotesize\faLink}\hspace*{0.13cm}yourwebsite.com}}%
         \kern 0.25 cm%
         \AND%
         \kern 0.25 cm%
-        \mbox{\hrefWithoutArrow{https://linkedin.com/in/yourusername}{\color{black}{\footnotesize\faLinkedinIn}\hspace*{0.13cm}yourusername}}%
+        \mbox{\hrefWithoutArrow{https://linkedin.com/in/yourusername}{{\footnotesize\faLinkedinIn}\hspace*{0.13cm}yourusername}}%
         \kern 0.25 cm%
         \AND%
         \kern 0.25 cm%
-        \mbox{\hrefWithoutArrow{https://github.com/yourusername}{\color{black}{\footnotesize\faGithub}\hspace*{0.13cm}yourusername}}%
+        \mbox{\hrefWithoutArrow{https://github.com/yourusername}{{\footnotesize\faGithub}\hspace*{0.13cm}yourusername}}%
     \end{header}
 
     \vspace{0.3 cm - 0.3 cm}
@@ -191,23 +215,15 @@
 
 
         
-        \begin{twocolentry}{
-            
-            
-        \textit{Sept 2000 – May 2005}}
-            \textbf{University of Pennsylvania}
-
-            \textit{BS in Computer Science}
-        \end{twocolentry}
-
-        \vspace{0.10 cm}
-        \begin{onecolentry}
+        \begin{threecolentry}{\textbf{BS}}{
+            Sept 2000 – May 2005
+        }
+            \textbf{University of Pennsylvania}, Computer Science
             \begin{highlights}
                 \item GPA: 3.9/4.0 (\href{https://example.com}{a link to somewhere})
                 \item \textbf{Coursework:} Computer Architecture, Comparison of Learning Algorithms, Computational Theory
             \end{highlights}
-        \end{onecolentry}
-
+        \end{threecolentry}
 
 
     
@@ -217,37 +233,27 @@
 
         
         \begin{twocolentry}{
-        \textit{Cupertino, CA}    
-            
-        \textit{June 2005 – Aug 2007}}
-            \textbf{Software Engineer}
-            
-            \textit{Apple}
-        \end{twocolentry}
+            Cupertino, CA
 
-        \vspace{0.10 cm}
-        \begin{onecolentry}
+        June 2005 – Aug 2007
+        }
+            \textbf{Apple}, Software Engineer
             \begin{highlights}
                 \item Reduced time to render user buddy lists by 75\% by implementing a prediction algorithm
                 \item Integrated iChat with Spotlight Search by creating a tool to extract metadata from saved chat transcripts and provide metadata to a system-wide search database
                 \item Redesigned chat file format and implemented backward compatibility for search
             \end{highlights}
-        \end{onecolentry}
+        \end{twocolentry}
 
 
         \vspace{0.2 cm}
 
         \begin{twocolentry}{
-        \textit{Redmond, WA}    
-            
-        \textit{June 2003 – Aug 2003}}
-            \textbf{Software Engineer Intern}
-            
-            \textit{Microsoft}
-        \end{twocolentry}
+            Redmond, WA
 
-        \vspace{0.10 cm}
-        \begin{onecolentry}
+        June 2003 – Aug 2003
+        }
+            \textbf{Microsoft}, Software Engineer Intern
             \begin{highlights}
                 \item Designed a UI for the VS open file switcher (Ctrl-Tab) and extended it to tool windows
                 \item Created a service to provide gradient across VS and VS add-ins, optimizing its performance via caching
@@ -255,7 +261,7 @@
                 \item Created a test case generation tool that creates random XML docs from XML Schema
                 \item Automated the extraction and processing of large datasets from legacy systems using SQL and Perl scripts
             \end{highlights}
-        \end{onecolentry}
+        \end{twocolentry}
 
 
 
@@ -274,14 +280,10 @@
                 \vspace{0.10 cm}
 
                 \mbox{Frodo Baggins}, \mbox{\textbf{\textit{John Doe}}}, \mbox{Samwise Gamgee}
-            \end{twocolentry}
+                \vspace{0.10 cm}
 
-
-            \vspace{0.10 cm}
-
-            \begin{onecolentry}
         \href{https://doi.org/10.1109/TASC.2023.3340648}{10.1109/TASC.2023.3340648}
-            \end{onecolentry}
+            \end{twocolentry}
         \end{samepage}
 
 
@@ -292,55 +294,40 @@
 
         
         \begin{twocolentry}{
-            
-            
-        \textit{\href{https://github.com/sinaatalay/rendercv}{github.com/name/repo}}}
+            \href{https://github.com/sinaatalay/rendercv}{github.com/name/repo}
+        }
             \textbf{Multi-User Drawing Tool}
-        \end{twocolentry}
-
-        \vspace{0.10 cm}
-        \begin{onecolentry}
             \begin{highlights}
                 \item Developed an electronic classroom where multiple users can simultaneously view and draw on a "chalkboard" with each person's edits synchronized
                 \item Tools Used: C++, MFC
             \end{highlights}
-        \end{onecolentry}
+        \end{twocolentry}
 
 
         \vspace{0.2 cm}
 
         \begin{twocolentry}{
-            
-            
-        \textit{\href{https://github.com/sinaatalay/rendercv}{github.com/name/repo}}}
+            \href{https://github.com/sinaatalay/rendercv}{github.com/name/repo}
+        }
             \textbf{Synchronized Desktop Calendar}
-        \end{twocolentry}
-
-        \vspace{0.10 cm}
-        \begin{onecolentry}
             \begin{highlights}
                 \item Developed a desktop calendar with globally shared and synchronized calendars, allowing users to schedule meetings with other users
                 \item Tools Used: C\#, .NET, SQL, XML
             \end{highlights}
-        \end{onecolentry}
+        \end{twocolentry}
 
 
         \vspace{0.2 cm}
 
         \begin{twocolentry}{
-            
-            
-        \textit{2002}}
+            2002
+        }
             \textbf{Custom Operating System}
-        \end{twocolentry}
-
-        \vspace{0.10 cm}
-        \begin{onecolentry}
             \begin{highlights}
                 \item Built a UNIX-style OS with a scheduler, file system, text editor, and calculator
                 \item Tools Used: C
             \end{highlights}
-        \end{onecolentry}
+        \end{twocolentry}
 
 
 

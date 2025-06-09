@@ -11,6 +11,7 @@ import { LaTeXTemplate } from '../templates/latex/templates';
 import { api } from '../services/api';
 import { parseResumeWithGemini, ParsedResumeData } from '../services/gemini';
 import { normalizeMongoData } from '../utils/resumeDataTransformer';
+import { toast } from 'react-hot-toast';
 
 // Add these interfaces at the top of the file, after imports
 interface GitHubProfile {
@@ -23,10 +24,56 @@ interface UserProfile {
   id: string;
   name: string;
   email: string;
-  githubProfile?: GitHubProfile;
+  subscription?: {
+    plan: 'free' | 'pro' | 'teams';
+    status: 'active' | 'inactive';
+  };
+  githubProfile?: {
+    username: string;
+    url: string;
+    connectedAt: string;
+  };
   githubConnected: boolean;
   linkedInProfile?: string;
-  linkedInConnected: boolean;
+  linkedInLastUpdated?: string;
+  linkedInConnected?: boolean;
+  transformedResume?: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    website: string;
+    linkedin: string;
+    github: string;
+    education: Array<{
+      institution: string;
+      degree: string;
+      startDate: string;
+      endDate: string;
+      gpa?: string;
+      coursework?: string;
+    }>;
+    experience: Array<{
+      title: string;
+      company: string;
+      location: string;
+      startDate: string;
+      endDate: string;
+      highlights: string[];
+    }>;
+    projects: Array<{
+      name: string;
+      date?: string;
+      link?: string;
+      description: string[];
+      technologies?: string;
+    }>;
+    skills: Array<{
+      category: string;
+      items: string;
+    }>;
+    updatedAt: Date;
+  };
 }
 
 interface ProfileResponse {
@@ -35,8 +82,60 @@ interface ProfileResponse {
   };
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  githubProfile?: {
+    username: string;
+    url: string;
+    connectedAt: string;
+  };
+  linkedInProfile?: {
+    url: string;
+    connectedAt: string;
+  };
+  transformedResume?: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
+    website: string;
+    linkedin: string;
+    github: string;
+    education: Array<{
+      institution: string;
+      degree: string;
+      startDate: string;
+      endDate: string;
+      gpa?: string;
+      coursework?: string;
+    }>;
+    experience: Array<{
+      title: string;
+      company: string;
+      location: string;
+      startDate: string;
+      endDate: string;
+      highlights: string[];
+    }>;
+    projects: Array<{
+      name: string;
+      date?: string;
+      link?: string;
+      description: string[];
+      technologies?: string;
+    }>;
+    skills: Array<{
+      category: string;
+      items: string;
+    }>;
+    updatedAt: Date;
+  };
+}
+
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [uploadingResume, setUploadingResume] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -55,6 +154,9 @@ const DashboardPage = () => {
   const [linkedInConnected, setLinkedInConnected] = useState(false);
   const [isLinkedInModalOpen, setIsLinkedInModalOpen] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [transformedResume, setTransformedResume] = useState<any>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const resumes = [
     {
       id: 1,
@@ -166,8 +268,31 @@ const DashboardPage = () => {
     }
   };
 
-  const handleGitHubConnect = () => {
-    setShowGitHubModal(true);
+  const handleTemplateSelect = async (template: LaTeXTemplate) => {
+    try {
+      const response = await api.getProfile(localStorage.getItem('token') || '');
+      if (response.data?.user) {
+        setUserData(response.data.user);
+        setSelectedTemplate(template.name);
+        setShowTemplateModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      toast.error('Failed to load user data');
+    }
+  };
+
+  const handleGitHubConnect = async () => {
+    try {
+      const response = await api.getProfile(localStorage.getItem('token') || '');
+      if (response.data?.user) {
+        setUserData(response.data.user);
+        setShowGitHubModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      toast.error('Failed to load user data');
+    }
   };
 
   const handleLinkedInConnect = async (profileUrl: string) => {
@@ -175,23 +300,21 @@ const DashboardPage = () => {
       setLoadingLinkedIn(true);
       setLinkedInError(null);
 
-      const { data } = await api.parseLinkedInProfile(profileUrl);
+      const response = await api.connectLinkedInProfile(profileUrl);
       
-      // Update connection state
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      
       setLinkedInConnected(true);
       
-      // Show success message
       setUploadSuccessMessage('LinkedIn profile connected successfully!');
       setUploadSuccess(true);
       
-      // Hide success message after 5 seconds
       setTimeout(() => {
         setUploadSuccess(false);
         setUploadSuccessMessage('');
       }, 5000);
-
-      // Close the modal
-      setIsLinkedInModalOpen(false);
 
     } catch (error) {
       console.error('Error connecting LinkedIn:', error);
@@ -217,9 +340,8 @@ const DashboardPage = () => {
   const checkLinkedInStatus = async () => {
     try {
       const response = await api.getProfile(localStorage.getItem('token') || '') as ProfileResponse;
-      // Check both linkedInConnected flag and linkedInProfile existence
-      const isConnected = Boolean(response.data?.user?.linkedInConnected && 
-                                response.data?.user?.linkedInProfile);
+      // Check if LinkedIn profile exists and is connected
+      const isConnected = Boolean(response.data?.user?.linkedInConnected && response.data?.user?.linkedInProfile);
       setLinkedInConnected(isConnected);
     } catch (error) {
       console.error('Error checking LinkedIn status:', error);
@@ -282,56 +404,34 @@ const DashboardPage = () => {
     }
   };
 
-  const handleTemplateSelect = async (template: LaTeXTemplate) => {
+  const fetchTransformedResume = async () => {
     try {
-      // Fetch user data from MongoDB
       const response = await api.getProfile(localStorage.getItem('token') || '');
       if (response.error) {
         throw new Error(response.error);
       }
       const userData = response.data?.user;
-
-      if (!userData) {
-        throw new Error('Failed to fetch user data');
-      }
-
-      // Transform the data using our existing function
-      const transformedData = normalizeMongoData(userData);
-
-      // Add template information to the transformed data
-      const templateData = {
-        ...transformedData,
-        template: {
-          id: template.id,
-          name: template.name,
-          filePath: template.filePath
+      if (userData?.transformedResume) {
+        // Update the user data in AuthContext
+        if (user) {
+          const updatedUser = {
+            ...user,
+            transformedResume: userData.transformedResume
+          };
+          login(localStorage.getItem('token') || '', updatedUser);
         }
-      };
-
-      // Save the template selection and transformed data
-      const saveResponse = await api.saveTemplate(templateData);
-      if (saveResponse.error) {
-        throw new Error(saveResponse.error);
       }
-
-      // Show success message
-      setUploadSuccessMessage('Template applied successfully!');
-      setUploadSuccess(true);
-      setTimeout(() => {
-        setUploadSuccess(false);
-        setUploadSuccessMessage('');
-      }, 5000);
-
-      // Close the template modal
-      setShowTemplateModal(false);
     } catch (error) {
-      console.error('Error applying template:', error);
-      setUploadError('Failed to apply template. Please try again.');
-      setTimeout(() => {
-        setUploadError('');
-      }, 5000);
+      console.error('Error fetching transformed resume:', error);
     }
   };
+
+  useEffect(() => {
+    fetchTransformedResume();
+  }, []);
+
+  // Update the LinkedIn connection check in the JSX
+  const isLinkedInConnected = Boolean(userData?.linkedInConnected && userData?.linkedInProfile);
 
   return (
     <div className="pt-20 pb-12">
@@ -739,12 +839,17 @@ const DashboardPage = () => {
         isOpen={isLinkedInModalOpen}
         onClose={() => setIsLinkedInModalOpen(false)}
         onSubmit={handleLinkedInConnect}
+        onSuccess={() => {
+          setLinkedInConnected(true);
+          setIsLinkedInModalOpen(false);
+        }}
       />
 
       <TemplateSelectionModal
         isOpen={showTemplateModal}
         onClose={() => setShowTemplateModal(false)}
         onSelect={handleTemplateSelect}
+        userData={user}
       />
     </div>
   );
