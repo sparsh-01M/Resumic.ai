@@ -454,7 +454,7 @@ const DashboardPage = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900 dark:text-white">{user?.name || 'User'}</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Free Plan</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{user?.subscription?.status || 'Free Plan'}</p>
                   </div>
                 </div>
 
